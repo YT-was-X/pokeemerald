@@ -216,8 +216,7 @@ void NewGameInitData(void)
 // Everything is reset as for a new game except the player's name, gender,
 // Trainer ID and options, plus:
 // - every starter from previous runs, back to its first stage at level 5 with
-//   fresh moves (up to 5 in the party so Birch's new starter still fits, the
-//   rest in the first PC box)
+//   fresh moves, waiting in the first PC box so the game starts as normal
 // - all money and Master Balls
 // - a head start of 1/NGP_SHINY_ROLL_DIVISOR of the current shiny rolls
 // ---------------------------------------------------------------------------
@@ -270,8 +269,7 @@ static bool8 IsOriginalStarter(struct BoxPokemon *boxMon)
         && GetBoxMonData(boxMon, MON_DATA_MET_LEVEL) == 5;
 }
 
-#define NGP_PARTY_STARTERS (PARTY_SIZE - 1)
-#define NGP_MAX_STARTERS   (NGP_PARTY_STARTERS + IN_BOX_COUNT)
+#define NGP_MAX_STARTERS IN_BOX_COUNT
 
 // Rebuild the starter as a level 5 first stage with its level 5 moves,
 // keeping its personality (nature, gender, shininess), IVs, ability,
@@ -393,16 +391,12 @@ void NewGamePlusInitData(void)
 
     for (i = 0; i < numStarters; i++)
     {
-        if (i < NGP_PARTY_STARTERS)
-            BoxMonToMon(&starters[i], &gPlayerParty[i]);
-        else
-            gPokemonStoragePtr->boxes[0][i - NGP_PARTY_STARTERS] = starters[i];
+        gPokemonStoragePtr->boxes[0][i] = starters[i];
 
         dexNum = SpeciesToNationalPokedexNum(GetBoxMonData(&starters[i], MON_DATA_SPECIES));
         GetSetPokedexFlag(dexNum, FLAG_SET_SEEN);
         GetSetPokedexFlag(dexNum, FLAG_SET_CAUGHT);
     }
-    CalculatePlayerPartyCount();
     if (starters != NULL)
         Free(starters);
 }

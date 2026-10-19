@@ -921,16 +921,6 @@ static void CB2_GiveStarter(void)
     *GetVarPointer(VAR_STARTER_MON) = gSpecialVar_Result;
     starterMon = GetStarterPokemon(gSpecialVar_Result);
     ScriptGiveMon(starterMon, 5, ITEM_NONE, 0, 0, 0);
-
-    // New Game Plus: starters carried over from earlier runs are already in
-    // the party, so move the new starter to the front for the first battle
-    if (gPlayerPartyCount > 1)
-    {
-        struct Pokemon newStarter = gPlayerParty[gPlayerPartyCount - 1];
-
-        memmove(&gPlayerParty[1], &gPlayerParty[0], (gPlayerPartyCount - 1) * sizeof(struct Pokemon));
-        gPlayerParty[0] = newStarter;
-    }
     ResetTasks();
     PlayBattleBGM();
     SetMainCallback2(CB2_StartFirstBattle);
