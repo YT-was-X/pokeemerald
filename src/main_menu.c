@@ -170,6 +170,8 @@
 
 static EWRAM_DATA bool8 sStartedPokeBallTask = 0;
 static EWRAM_DATA u16 sCurrItemAndOptionMenuCheck = 0;
+// TRUE while Prof. Birch's intro is running, so CB2_MainMenu runs it at double speed
+static EWRAM_DATA bool8 sBirchSpeechDoubleSpeed = FALSE;
 
 static u8 sBirchSpeechMainTaskId;
 
@@ -532,6 +534,15 @@ enum
 static void CB2_MainMenu(void)
 {
     RunTasks();
+    if (sBirchSpeechDoubleSpeed)
+    {
+        // Run the intro's tasks and sprite animations a second time this frame.
+        // Clear new button presses first so one press isn't handled twice.
+        gMain.newKeys = 0;
+        gMain.newAndRepeatedKeys = 0;
+        RunTasks();
+        AnimateSprites();
+    }
     AnimateSprites();
     BuildOamBuffer();
     UpdatePaletteFade();
@@ -557,6 +568,7 @@ void CB2_ReinitMainMenu(void)
 static u32 InitMainMenu(bool8 returningFromOptionsMenu)
 {
     SetVBlankCallback(NULL);
+    sBirchSpeechDoubleSpeed = FALSE;
 
     SetGpuReg(REG_OFFSET_DISPCNT, 0);
     SetGpuReg(REG_OFFSET_BG2CNT, 0);
@@ -1264,6 +1276,7 @@ static void HighlightSelectedMainMenuItem(u8 menuType, u8 selectedMenuItem, s16 
 
 static void Task_NewGameBirchSpeech_Init(u8 taskId)
 {
+    sBirchSpeechDoubleSpeed = TRUE;
     SetGpuReg(REG_OFFSET_DISPCNT, 0);
     SetGpuReg(REG_OFFSET_DISPCNT, DISPCNT_OBJ_ON | DISPCNT_OBJ_1D_MAP);
     InitBgFromTemplate(&sBirchBgTemplate);
@@ -1780,6 +1793,7 @@ static void Task_NewGameBirchSpeech_Cleanup(u8 taskId)
         FreeAllWindowBuffers();
         FreeAndDestroyMonPicSprite(gTasks[taskId].tLotadSpriteId);
         ResetAllPicSprites();
+        sBirchSpeechDoubleSpeed = FALSE;
         SetMainCallback2(CB2_NewGame);
         DestroyTask(taskId);
     }
@@ -1789,6 +1803,8 @@ static void CB2_NewGameBirchSpeech_ReturnFromNamingScreen(void)
 {
     u8 taskId;
     u8 spriteId;
+
+    sBirchSpeechDoubleSpeed = TRUE;
 
     ResetBgsAndClearDma3BusyFlags(0);
     SetGpuReg(REG_OFFSET_DISPCNT, 0);
