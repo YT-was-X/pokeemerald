@@ -69,7 +69,7 @@ endif
 
 ROM_NAME := $(FILE_NAME).gba
 OBJ_DIR_NAME := $(BUILD_DIR)/emerald
-MODERN_ROM_NAME := $(FILE_NAME)_modern.gba
+MODERN_ROM_NAME := test_PokemonEmerald_Modern.gba
 MODERN_OBJ_DIR_NAME := $(BUILD_DIR)/modern
 ASSETS_DIR_NAME := $(BUILD_DIR)/assets
 

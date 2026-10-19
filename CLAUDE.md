@@ -9,10 +9,10 @@ Personal Pokémon Emerald ROM hack built on the pret decompilation.
 
 ## Building
 - The SessionStart hook (`.claude/hooks/session-start.sh`) installs the toolchains only.
-- **Only build when the user asks.** Use `make modern -j4`, which produces `pokeemerald_modern.gba`.
+- **Only build when the user asks.** Use `make modern -j4`, which produces `test_PokemonEmerald_Modern.gba`.
 - The matching build (`make`) no longer reproduces `rom.sha1` on this branch. That's expected.
 - To compile a single file without building the ROM: `make MODERN=1 build/modern/src/<file>.o`.
-- After a build, send `pokeemerald_modern.gba` to the user with SendUserFile (`display: attach`). They test it on a phone emulator.
+- After a build, send `test_PokemonEmerald_Modern.gba` to the user with SendUserFile (`display: attach`). They test it on a phone emulator.
 
 ## Save compatibility
 The user plays on existing saves. Avoid changes to the `SaveBlock1`, `SaveBlock2` or `PokemonStorage` layouts (`include/global.h`, `include/pokemon_storage_system.h`); they break existing saves. If a change requires it, say so first. SaveBlock1 has only about 120 bytes free.
