@@ -371,19 +371,55 @@ void NewGameInitPCItems(void)
     }
 }
 
+// Returns TRUE if the player now has the item in their bag or PC
+static bool8 PutItemInPCIfMissing(u16 itemId)
+{
+    if (CheckBagHasItem(itemId, 1) || CheckPCHasItem(itemId, 1))
+        return TRUE;
+    return AddPCItem(itemId, 1);
+}
+
 // Put the Shiny Charm in the PC the first time it's opened (also on existing saves)
 static void GiveShinyCharmOnce(void)
 {
     if (FlagGet(FLAG_RECEIVED_SHINY_CHARM))
         return;
-    if (CheckBagHasItem(ITEM_SHINY_CHARM, 1) || CheckPCHasItem(ITEM_SHINY_CHARM, 1)
-     || AddPCItem(ITEM_SHINY_CHARM, 1))
+    if (PutItemInPCIfMissing(ITEM_SHINY_CHARM))
         FlagSet(FLAG_RECEIVED_SHINY_CHARM);
+}
+
+// After the Elite Four, put the Mystery Gift event tickets in the PC once and
+// unlock their ferry routes, as the official distributions did
+static void GiveEventTicketsOnce(void)
+{
+    bool8 allGiven = TRUE;
+
+    if (!FlagGet(FLAG_SYS_GAME_CLEAR) || FlagGet(FLAG_RECEIVED_EVENT_TICKETS))
+        return;
+
+    if (!PutItemInPCIfMissing(ITEM_EON_TICKET))
+        allGiven = FALSE;
+    if (!PutItemInPCIfMissing(ITEM_AURORA_TICKET))
+        allGiven = FALSE;
+    if (!PutItemInPCIfMissing(ITEM_OLD_SEA_MAP))
+        allGiven = FALSE;
+    if (!PutItemInPCIfMissing(ITEM_MYSTIC_TICKET))
+        allGiven = FALSE;
+
+    FlagSet(FLAG_ENABLE_SHIP_SOUTHERN_ISLAND);
+    FlagSet(FLAG_ENABLE_SHIP_BIRTH_ISLAND);
+    FlagSet(FLAG_ENABLE_SHIP_FARAWAY_ISLAND);
+    FlagSet(FLAG_ENABLE_SHIP_NAVEL_ROCK);
+
+    // If the PC was full, try the missing tickets again next time
+    if (allGiven)
+        FlagSet(FLAG_RECEIVED_EVENT_TICKETS);
 }
 
 void BedroomPC(void)
 {
     GiveShinyCharmOnce();
+    GiveEventTicketsOnce();
     sTopMenuOptionOrder = sBedroomPC_OptionOrder;
     sTopMenuNumOptions = NUM_BEDROOM_PC_OPTIONS;
     DisplayItemMessageOnField(CreateTask(TaskDummy, 0), gText_WhatWouldYouLike, InitPlayerPCMenu);
@@ -392,6 +428,7 @@ void BedroomPC(void)
 void PlayerPC(void)
 {
     GiveShinyCharmOnce();
+    GiveEventTicketsOnce();
     sTopMenuOptionOrder = sPlayerPC_OptionOrder;
     sTopMenuNumOptions = NUM_PLAYER_PC_OPTIONS;
     DisplayItemMessageOnField(CreateTask(TaskDummy, 0), gText_WhatWouldYouLike, InitPlayerPCMenu);
