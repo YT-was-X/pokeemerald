@@ -4,6 +4,7 @@
 #include "decompress.h"
 #include "decoration.h"
 #include "decoration_inventory.h"
+#include "event_data.h"
 #include "event_object_movement.h"
 #include "field_player_avatar.h"
 #include "field_screen_effect.h"
@@ -81,6 +82,9 @@ enum
     LAYER_TYPE
 };
 
+// Largest vanilla mart list is 12 items; leaves room for the post-game Master Ball
+#define MAX_POSTGAME_MART_ITEMS 32
+
 struct MartInfo
 {
     void (*callback)(void);
@@ -110,6 +114,7 @@ static EWRAM_DATA struct ShopData *sShopData = NULL;
 static EWRAM_DATA struct ListMenuItem *sListMenuItems = NULL;
 static EWRAM_DATA u8 (*sItemNames)[ITEM_NAME_LENGTH + 2] = {0};
 static EWRAM_DATA u8 sPurchaseHistoryId = 0;
+static EWRAM_DATA u16 sPostGameMartItems[MAX_POSTGAME_MART_ITEMS + 2] = {0};
 EWRAM_DATA struct ItemSlot gMartPurchaseHistory[SMARTSHOPPER_NUM_ITEMS] = {0};
 
 static void Task_ShopMenu(u8 taskId);
@@ -1246,10 +1251,36 @@ static void RecordItemPurchase(u8 taskId)
 #undef tCallbackHi
 #undef tCallbackLo
 
+// After the Elite Four, any mart that sells Poké Balls also sells Master Balls
+static const u16 *AddPostGameMartItems(const u16 *itemsForSale)
+{
+    u16 i;
+    bool8 sellsBalls = FALSE;
+
+    if (!FlagGet(FLAG_SYS_GAME_CLEAR))
+        return itemsForSale;
+
+    for (i = 0; itemsForSale[i] != ITEM_NONE; i++)
+    {
+        if (i >= MAX_POSTGAME_MART_ITEMS || itemsForSale[i] == ITEM_MASTER_BALL)
+            return itemsForSale;
+        if (GetItemPocket(itemsForSale[i]) == POCKET_POKE_BALLS)
+            sellsBalls = TRUE;
+    }
+
+    if (!sellsBalls)
+        return itemsForSale;
+
+    sPostGameMartItems[0] = ITEM_MASTER_BALL;
+    memcpy(&sPostGameMartItems[1], itemsForSale, i * sizeof(*itemsForSale));
+    sPostGameMartItems[i + 1] = ITEM_NONE;
+    return sPostGameMartItems;
+}
+
 void CreatePokemartMenu(const u16 *itemsForSale)
 {
     CreateShopMenu(MART_TYPE_NORMAL);
-    SetShopItemsForSale(itemsForSale);
+    SetShopItemsForSale(AddPostGameMartItems(itemsForSale));
     ClearItemPurchases();
     SetShopMenuCallback(ScriptContext_Enable);
 }
