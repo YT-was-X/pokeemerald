@@ -2235,6 +2235,7 @@ static const u16 sLegendaryDexNums[] =
 // - Each gym badge adds a 1-in-NUM_BADGES chance of one more roll, so all
 //   8 badges always add one (doubling the base odds).
 // - Each legendary Pokémon registered as caught in the Pokédex adds one roll.
+// - Beating the Elite Four adds SHINY_CHAMPION_ROLLS.
 u32 GetShinyRolls(void)
 {
     u32 rolls = 1;
@@ -2257,6 +2258,9 @@ u32 GetShinyRolls(void)
         if (GetSetPokedexFlag(sLegendaryDexNums[i], FLAG_GET_CAUGHT))
             rolls++;
     }
+
+    if (FlagGet(FLAG_SYS_GAME_CLEAR))
+        rolls += SHINY_CHAMPION_ROLLS;
 
     return rolls;
 }
