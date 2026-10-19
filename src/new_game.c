@@ -48,6 +48,7 @@
 #include "constants/region_map_sections.h"
 #include "constants/species.h"
 #include "data.h"
+#include "malloc.h"
 #include "string_util.h"
 
 extern const u8 EventScript_ResetAllMapFlags[];
@@ -214,7 +215,9 @@ void NewGameInitData(void)
 // New Game Plus: started from the bed in the player's room after the Elite Four.
 // Everything is reset as for a new game except the player's name, gender,
 // Trainer ID and options, plus:
-// - the original starter, back to its first stage at level 5 with fresh moves
+// - every starter from previous runs, back to its first stage at level 5 with
+//   fresh moves (up to 5 in the party so Birch's new starter still fits, the
+//   rest in the first PC box)
 // - all money and Master Balls
 // - a head start of 1/NGP_SHINY_ROLL_DIVISOR of the current shiny rolls
 // ---------------------------------------------------------------------------
@@ -267,25 +270,8 @@ static bool8 IsOriginalStarter(struct BoxPokemon *boxMon)
         && GetBoxMonData(boxMon, MON_DATA_MET_LEVEL) == 5;
 }
 
-static struct BoxPokemon *FindOriginalStarter(void)
-{
-    u32 i, j;
-
-    for (i = 0; i < PARTY_SIZE; i++)
-    {
-        if (IsOriginalStarter(&gPlayerParty[i].box))
-            return &gPlayerParty[i].box;
-    }
-    for (i = 0; i < TOTAL_BOXES_COUNT; i++)
-    {
-        for (j = 0; j < IN_BOX_COUNT; j++)
-        {
-            if (IsOriginalStarter(&gPokemonStoragePtr->boxes[i][j]))
-                return &gPokemonStoragePtr->boxes[i][j];
-        }
-    }
-    return NULL;
-}
+#define NGP_PARTY_STARTERS (PARTY_SIZE - 1)
+#define NGP_MAX_STARTERS   (NGP_PARTY_STARTERS + IN_BOX_COUNT)
 
 // Rebuild the starter as a level 5 first stage with its level 5 moves,
 // keeping its personality (nature, gender, shininess), IVs, ability,
@@ -330,6 +316,35 @@ static void MakeLevel5Starter(struct Pokemon *dest, struct BoxPokemon *src)
     CalculateMonStats(dest);
 }
 
+// Rebuild every starter in the party and PC boxes into starters[]
+static u32 CollectStarters(struct BoxPokemon *starters)
+{
+    struct Pokemon mon;
+    u32 count = 0;
+    u32 i, j;
+
+    for (i = 0; i < PARTY_SIZE && count < NGP_MAX_STARTERS; i++)
+    {
+        if (IsOriginalStarter(&gPlayerParty[i].box))
+        {
+            MakeLevel5Starter(&mon, &gPlayerParty[i].box);
+            starters[count++] = mon.box;
+        }
+    }
+    for (i = 0; i < TOTAL_BOXES_COUNT; i++)
+    {
+        for (j = 0; j < IN_BOX_COUNT && count < NGP_MAX_STARTERS; j++)
+        {
+            if (IsOriginalStarter(&gPokemonStoragePtr->boxes[i][j]))
+            {
+                MakeLevel5Starter(&mon, &gPokemonStoragePtr->boxes[i][j]);
+                starters[count++] = mon.box;
+            }
+        }
+    }
+    return count;
+}
+
 static u16 CountMasterBalls(void)
 {
     u32 count = CountTotalItemQuantityInBag(ITEM_MASTER_BALL);
@@ -357,17 +372,15 @@ static u16 GetNewGamePlusShinyRolls(void)
 
 void NewGamePlusInitData(void)
 {
-    struct Pokemon starter;
-    struct BoxPokemon *oldStarter = FindOriginalStarter();
-    bool8 hasStarter = (oldStarter != NULL);
+    struct BoxPokemon *starters = AllocZeroed(sizeof(struct BoxPokemon) * NGP_MAX_STARTERS);
+    u32 numStarters = (starters != NULL) ? CollectStarters(starters) : 0;
+    u32 i;
     u8 trainerId[TRAINER_ID_LENGTH];
     u32 money = GetMoney(&gSaveBlock1Ptr->money);
     u16 masterBalls = CountMasterBalls();
     u16 shinyRolls = GetNewGamePlusShinyRolls();
     u16 dexNum;
 
-    if (hasStarter)
-        MakeLevel5Starter(&starter, oldStarter);
     memcpy(trainerId, gSaveBlock2Ptr->playerTrainerId, TRAINER_ID_LENGTH);
 
     NewGameInitData();
@@ -378,14 +391,20 @@ void NewGamePlusInitData(void)
         AddPCItem(ITEM_MASTER_BALL, masterBalls);
     VarSet(VAR_NGP_SHINY_ROLLS, shinyRolls);
 
-    if (hasStarter)
+    for (i = 0; i < numStarters; i++)
     {
-        gPlayerParty[0] = starter;
-        CalculatePlayerPartyCount();
-        dexNum = SpeciesToNationalPokedexNum(GetMonData(&starter, MON_DATA_SPECIES));
+        if (i < NGP_PARTY_STARTERS)
+            BoxMonToMon(&starters[i], &gPlayerParty[i]);
+        else
+            gPokemonStoragePtr->boxes[0][i - NGP_PARTY_STARTERS] = starters[i];
+
+        dexNum = SpeciesToNationalPokedexNum(GetBoxMonData(&starters[i], MON_DATA_SPECIES));
         GetSetPokedexFlag(dexNum, FLAG_SET_SEEN);
         GetSetPokedexFlag(dexNum, FLAG_SET_CAUGHT);
     }
+    CalculatePlayerPartyCount();
+    if (starters != NULL)
+        Free(starters);
 }
 
 // Special, called from the bed script after the screen fades out
