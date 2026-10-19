@@ -290,7 +290,8 @@ bool16 AddTextPrinter(struct TextPrinterTemplate *printerTemplate, u8 speed, Tex
     GenerateFontHalfRowLookupTable(printerTemplate->fgColor, printerTemplate->bgColor, printerTemplate->shadowColor);
     if (speed != TEXT_SKIP_DRAW && speed != 0)
     {
-        --sTempTextPrinter.textSpeed;
+        // No delay between characters, so RunTextPrinters can draw them all in one frame
+        sTempTextPrinter.textSpeed = 0;
         sTextPrinters[printerTemplate->windowId] = sTempTextPrinter;
     }
     else

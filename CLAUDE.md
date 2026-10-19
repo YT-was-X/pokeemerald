@@ -21,7 +21,7 @@ The user plays on existing saves. Avoid changes to the `SaveBlock1`, `SaveBlock2
 - **Post-game Master Balls:** after `FLAG_SYS_GAME_CLEAR`, any normal mart that sells a Poké Ball item also lists the Master Ball first (`AddPostGameMartItems` in `src/shop.c`). The Master Ball price is 50,000 (`src/data/items.h`).
 - **Running Shoes from the start:** the `FLAG_SYS_B_DASH` check was removed from the run check in `src/field_player_avatar.c`, so running works on existing saves too. Mom's Running Shoes scene in Littleroot still plays; it's harmless. Maps that disallow running still do.
 - **Running in Poké Centers and Marts:** `allow_running` set to true in the `map.json` of every `*_PokemonCenter_1F/2F`, every `*_Mart` and `EverGrandeCity_PokemonLeague_1F`.
-- **Instant text:** `RunTextPrinters` in `src/text.c` draws every character up to the next prompt, scroll or pause in one frame (capped at `MAX_TEXT_CHARS_PER_FRAME`), at every text speed, and copies the window to VRAM once per frame. Line scrolling also happens in one frame. The Options Text Speed setting no longer has a visible effect.
+- **Instant text:** `RunTextPrinters` in `src/text.c` draws every character up to the next prompt, scroll or pause in one frame (capped at `MAX_TEXT_CHARS_PER_FRAME`), at every text speed (`AddTextPrinter` sets the per-character delay to 0), and copies the window to VRAM once per frame. Line scrolling also happens in one frame. The Options Text Speed setting no longer has a visible effect.
 - **Instant Nurse Joy healing:** `Common_EventScript_PkmnCenterNurse` in `data/scripts/pkmn_center_nurse.inc` goes straight to healing, skipping the yes/no question (and the Gold Card greeting, which is now unused).
 
 ## Where things live
