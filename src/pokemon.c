@@ -2203,11 +2203,38 @@ void CreateMon(struct Pokemon *mon, u16 species, u8 level, u8 fixedIV, u8 hasFix
     CalculateMonStats(mon);
 }
 
+// Legendary and mythical Pokémon; each one caught adds a shiny roll
+static const u16 sLegendaryDexNums[] =
+{
+    NATIONAL_DEX_ARTICUNO,
+    NATIONAL_DEX_ZAPDOS,
+    NATIONAL_DEX_MOLTRES,
+    NATIONAL_DEX_MEWTWO,
+    NATIONAL_DEX_MEW,
+    NATIONAL_DEX_RAIKOU,
+    NATIONAL_DEX_ENTEI,
+    NATIONAL_DEX_SUICUNE,
+    NATIONAL_DEX_LUGIA,
+    NATIONAL_DEX_HO_OH,
+    NATIONAL_DEX_CELEBI,
+    NATIONAL_DEX_REGIROCK,
+    NATIONAL_DEX_REGICE,
+    NATIONAL_DEX_REGISTEEL,
+    NATIONAL_DEX_LATIAS,
+    NATIONAL_DEX_LATIOS,
+    NATIONAL_DEX_KYOGRE,
+    NATIONAL_DEX_GROUDON,
+    NATIONAL_DEX_RAYQUAZA,
+    NATIONAL_DEX_JIRACHI,
+    NATIONAL_DEX_DEOXYS,
+};
+
 // How many personality values to try when generating a Pokémon for the player;
 // rerolls until shiny or out of rolls.
 // - The Shiny Charm in the bag gives SHINY_CHARM_ROLLS instead of 1.
 // - Each gym badge adds a 1-in-NUM_BADGES chance of one more roll, so all
 //   8 badges always add one (doubling the base odds).
+// - Each legendary Pokémon registered as caught in the Pokédex adds one roll.
 u32 GetShinyRolls(void)
 {
     u32 rolls = 1;
@@ -2224,6 +2251,12 @@ u32 GetShinyRolls(void)
     }
     if (Random() % NUM_BADGES < badges)
         rolls++;
+
+    for (i = 0; i < ARRAY_COUNT(sLegendaryDexNums); i++)
+    {
+        if (GetSetPokedexFlag(sLegendaryDexNums[i], FLAG_GET_CAUGHT))
+            rolls++;
+    }
 
     return rolls;
 }
