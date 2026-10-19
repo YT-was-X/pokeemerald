@@ -2235,13 +2235,12 @@ void UpdateHealthboxAttribute(u8 healthboxSpriteId, struct Pokemon *mon, u8 elem
 #define B_EXPBAR_PIXELS 64
 #define B_HEALTHBAR_PIXELS 48
 
-s32 MoveBattleBar(u8 battler, u8 healthboxSpriteId, u8 whichBar, u8 unused)
+// Steps the bar towards its new value; returns the new value, or -1 when done
+static s32 StepBattleBar(u8 battler, u8 whichBar)
 {
-    s32 currentBarValue;
-
     if (whichBar == HEALTH_BAR) // health bar
     {
-        currentBarValue = CalcNewBarValue(gBattleSpritesDataPtr->battleBars[battler].maxValue,
+        return CalcNewBarValue(gBattleSpritesDataPtr->battleBars[battler].maxValue,
                     gBattleSpritesDataPtr->battleBars[battler].oldValue,
                     gBattleSpritesDataPtr->battleBars[battler].receivedValue,
                     &gBattleSpritesDataPtr->battleBars[battler].currValue,
@@ -2256,11 +2255,30 @@ s32 MoveBattleBar(u8 battler, u8 healthboxSpriteId, u8 whichBar, u8 unused)
             expFraction = 1;
         expFraction = abs(gBattleSpritesDataPtr->battleBars[battler].receivedValue / expFraction);
 
-        currentBarValue = CalcNewBarValue(gBattleSpritesDataPtr->battleBars[battler].maxValue,
+        return CalcNewBarValue(gBattleSpritesDataPtr->battleBars[battler].maxValue,
                     gBattleSpritesDataPtr->battleBars[battler].oldValue,
                     gBattleSpritesDataPtr->battleBars[battler].receivedValue,
                     &gBattleSpritesDataPtr->battleBars[battler].currValue,
                     B_EXPBAR_PIXELS / 8, expFraction);
+    }
+}
+
+// Instant bars: run every step in one call, so the bar and HP number jump to
+// the new value this frame and the next call reports the bar as done (-1)
+#define MAX_BAR_STEPS 0x4000
+
+s32 MoveBattleBar(u8 battler, u8 healthboxSpriteId, u8 whichBar, u8 unused)
+{
+    s32 currentBarValue = StepBattleBar(battler, whichBar);
+    s32 nextBarValue;
+    u32 i;
+
+    for (i = 0; currentBarValue != -1 && i < MAX_BAR_STEPS; i++)
+    {
+        nextBarValue = StepBattleBar(battler, whichBar);
+        if (nextBarValue == -1)
+            break;
+        currentBarValue = nextBarValue;
     }
 
     if (whichBar == EXP_BAR || (whichBar == HEALTH_BAR && !gBattleSpritesDataPtr->battlerData[battler].hpNumbersNoBars))
