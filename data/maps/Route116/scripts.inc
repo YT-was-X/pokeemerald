@@ -68,11 +68,13 @@ Route116_EventScript_GiveRepeatBall::
 	end
 
 Route116_EventScript_DevonEmployeeExit::
-	applywaitmovement VAR_LAST_TALKED, Route116_Movement_DevonEmployeeExit
+	applymovement VAR_LAST_TALKED, Route116_Movement_DevonEmployeeExit
+	waitmovement 0
 	return
 
 Route116_EventScript_DevonEmployeeExitEast::
-	applywaitmovement VAR_LAST_TALKED, Route116_Movement_DevonEmployeeExitEast
+	applymovement VAR_LAST_TALKED, Route116_Movement_DevonEmployeeExitEast
+	waitmovement 0
 	return
 
 Route116_EventScript_TryGiveRepeatBallAgain::
@@ -190,11 +192,13 @@ Route116_EventScript_GlassesManExit::
 	end
 
 Route116_EventScript_GlassesManExitNormal::
-	applywaitmovement VAR_LAST_TALKED, Route116_Movement_GlassesManExit
+	applymovement VAR_LAST_TALKED, Route116_Movement_GlassesManExit
+	waitmovement 0
 	return
 
 Route116_EventScript_GlassesManExitEast::
-	applywaitmovement VAR_LAST_TALKED, Route116_Movement_GlassesManExitEast
+	applymovement VAR_LAST_TALKED, Route116_Movement_GlassesManExitEast
+	waitmovement 0
 	return
 
 Route116_Movement_GlassesManExit:

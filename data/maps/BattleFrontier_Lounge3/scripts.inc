@@ -192,7 +192,8 @@ BattleFrontier_Lounge3_EventScript_FatMan::
 
 BattleFrontier_Lounge3_EventScript_FaceOriginalDirection::
 	closemessage
-	applywaitmovement VAR_LAST_TALKED, Common_Movement_FaceOriginalDirection
+	applymovement VAR_LAST_TALKED, Common_Movement_FaceOriginalDirection
+	waitmovement 0
 	release
 	end
 

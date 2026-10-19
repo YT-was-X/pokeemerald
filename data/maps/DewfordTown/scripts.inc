@@ -81,6 +81,7 @@ DewfordTown_EventScript_OldRodFisherman::
 DewfordTown_EventScript_GiveOldRod::
 	msgbox DewfordTown_Text_GiveYouOneOfMyRods, MSGBOX_DEFAULT
 	giveitem ITEM_OLD_ROD
+	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
 	setflag FLAG_RECEIVED_OLD_ROD
 	msgbox DewfordTown_Text_ThrowInFishingAdvice, MSGBOX_DEFAULT
 	release
@@ -113,9 +114,11 @@ DewfordTown_EventScript_SailToPetalburg::
 	call EventScript_BackupMrBrineyLocation
 	setobjectsubpriority LOCALID_DEWFORD_BRINEY, MAP_DEWFORD_TOWN, 0
 	setobjectsubpriority LOCALID_PLAYER, MAP_DEWFORD_TOWN, 0
-	applywaitmovement LOCALID_DEWFORD_BRINEY, DewfordTown_Movement_BrineyBoardBoat
+	applymovement LOCALID_DEWFORD_BRINEY, DewfordTown_Movement_BrineyBoardBoat
+	waitmovement 0
 	removeobject LOCALID_DEWFORD_BRINEY
-	applywaitmovement LOCALID_PLAYER, DewfordTown_Movement_PlayerBoardBoat
+	applymovement LOCALID_PLAYER, DewfordTown_Movement_PlayerBoardBoat
+	waitmovement 0
 	hideobjectat LOCALID_PLAYER, MAP_DEWFORD_TOWN
 	call Common_EventScript_PlayBrineysBoatMusic
 	applymovement LOCALID_DEWFORD_BOAT, DewfordTown_Movement_SailToPetalburg
@@ -123,7 +126,8 @@ DewfordTown_EventScript_SailToPetalburg::
 	waitmovement 0
 	showobjectat LOCALID_PLAYER, MAP_ROUTE104
 	call Common_EventScript_StopBrineysBoatMusic
-	applywaitmovement LOCALID_PLAYER, DewfordTown_Movement_ExitBoatPetalburg
+	applymovement LOCALID_PLAYER, DewfordTown_Movement_ExitBoatPetalburg
+	waitmovement 0
 	showobjectat LOCALID_PLAYER, MAP_ROUTE104
 	clearflag FLAG_HIDE_BRINEYS_HOUSE_MR_BRINEY
 	clearflag FLAG_HIDE_BRINEYS_HOUSE_PEEKO
@@ -142,9 +146,11 @@ DewfordTown_EventScript_SailToSlateport::
 	call EventScript_BackupMrBrineyLocation
 	setobjectsubpriority LOCALID_DEWFORD_BRINEY, MAP_DEWFORD_TOWN, 0
 	setobjectsubpriority LOCALID_PLAYER, MAP_DEWFORD_TOWN, 1
-	applywaitmovement LOCALID_DEWFORD_BRINEY, DewfordTown_Movement_BrineyBoardBoat
+	applymovement LOCALID_DEWFORD_BRINEY, DewfordTown_Movement_BrineyBoardBoat
+	waitmovement 0
 	removeobject LOCALID_DEWFORD_BRINEY
-	applywaitmovement LOCALID_PLAYER, DewfordTown_Movement_PlayerBoardBoat
+	applymovement LOCALID_PLAYER, DewfordTown_Movement_PlayerBoardBoat
+	waitmovement 0
 	hideobjectat LOCALID_PLAYER, MAP_DEWFORD_TOWN
 	call Common_EventScript_PlayBrineysBoatMusic
 	applymovement LOCALID_DEWFORD_BOAT, DewfordTown_Movement_SailToSlateport
@@ -152,11 +158,13 @@ DewfordTown_EventScript_SailToSlateport::
 	waitmovement 0
 	call Common_EventScript_StopBrineysBoatMusic
 	showobjectat LOCALID_PLAYER, MAP_ROUTE109
-	applywaitmovement LOCALID_PLAYER, DewfordTown_Movement_ExitBoatSlateport
+	applymovement LOCALID_PLAYER, DewfordTown_Movement_ExitBoatSlateport
+	waitmovement 0
 	setobjectxyperm LOCALID_ROUTE109_BRINEY, 21, 26
 	addobject LOCALID_ROUTE109_BRINEY
 	setobjectsubpriority LOCALID_ROUTE109_BRINEY, MAP_ROUTE109, 0
-	applywaitmovement LOCALID_ROUTE109_BRINEY, DewfordTown_Movement_BrineyExitBoat
+	applymovement LOCALID_ROUTE109_BRINEY, DewfordTown_Movement_BrineyExitBoat
+	waitmovement 0
 	clearflag FLAG_HIDE_ROUTE_109_MR_BRINEY
 	addobject LOCALID_ROUTE109_BOAT
 	clearflag FLAG_HIDE_ROUTE_109_MR_BRINEY_BOAT

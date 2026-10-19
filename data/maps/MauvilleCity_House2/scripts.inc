@@ -13,8 +13,10 @@ MauvilleCity_House2_EventScript_Woman::
 
 MauvilleCity_House2_EventScript_AskToTradeForHarborMail::
 	playse SE_PIN
-	applywaitmovement VAR_LAST_TALKED, Common_Movement_ExclamationMark
-	applywaitmovement VAR_LAST_TALKED, Common_Movement_Delay48
+	applymovement VAR_LAST_TALKED, Common_Movement_ExclamationMark
+	waitmovement 0
+	applymovement VAR_LAST_TALKED, Common_Movement_Delay48
+	waitmovement 0
 	msgbox MauvilleCity_House2_Text_TradeHarborMailForCoinCase, MSGBOX_YESNO
 	goto_if_eq VAR_RESULT, YES, MauvilleCity_House2_EventScript_AcceptTrade
 	goto_if_eq VAR_RESULT, NO, MauvilleCity_House2_EventScript_DeclineTrade
@@ -22,8 +24,9 @@ MauvilleCity_House2_EventScript_AskToTradeForHarborMail::
 
 MauvilleCity_House2_EventScript_AcceptTrade::
 	msgbox MauvilleCity_House2_Text_IllTradeYouCoinCase, MSGBOX_DEFAULT
-	removeitem ITEM_HARBOR_MAIL
 	giveitem ITEM_COIN_CASE
+	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
+	removeitem ITEM_HARBOR_MAIL
 	setflag FLAG_RECEIVED_COIN_CASE
 	goto MauvilleCity_House2_EventScript_ReceivedCoinCase
 	end

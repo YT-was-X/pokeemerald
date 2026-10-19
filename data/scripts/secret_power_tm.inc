@@ -57,11 +57,13 @@ Route111_EventScript_GiveSecretPower::
 	end
 
 Route111_EventScript_SecretPowerManExit::
-	applywaitmovement VAR_LAST_TALKED, Route111_Movement_SecretPowerManExit
+	applymovement VAR_LAST_TALKED, Route111_Movement_SecretPowerManExit
+	waitmovement 0
 	return
 
 Route111_EventScript_SecretPowerManExitNorth::
-	applywaitmovement VAR_LAST_TALKED, Route111_Movement_SecretPowerManExitNorth
+	applymovement VAR_LAST_TALKED, Route111_Movement_SecretPowerManExitNorth
+	waitmovement 0
 	return
 
 Route111_EventScript_NoRoomForSecretPower::

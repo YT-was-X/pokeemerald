@@ -53,6 +53,9 @@
 #define CHAR_EQUALS            0x35
 #define CHAR_SEMICOLON         0x36
 #define CHAR_BARD_WORD_DELIMIT 0x37 // Empty space to separate words in Bard's song
+#define CHAR_V_D_ARROW         0x38
+#define CHAR_NBSP              0x39 // Non-breaking space
+#define CHAR_ZWS               0x3A // Zero-width space
 #define CHAR_INV_QUESTION_MARK 0x51
 #define CHAR_INV_EXCL_MARK     0x52
 #define CHAR_PK                0x53
@@ -223,13 +226,17 @@
 #define EXT_CTRL_CODE_FILL_WINDOW            0x0F
 #define EXT_CTRL_CODE_PLAY_SE                0x10
 #define EXT_CTRL_CODE_CLEAR                  0x11
-#define EXT_CTRL_CODE_SKIP_TO                0x12
+#define EXT_CTRL_CODE_SKIP                   0x12
 #define EXT_CTRL_CODE_CLEAR_TO               0x13
 #define EXT_CTRL_CODE_MIN_LETTER_SPACING     0x14
 #define EXT_CTRL_CODE_JPN                    0x15
 #define EXT_CTRL_CODE_ENG                    0x16
 #define EXT_CTRL_CODE_PAUSE_MUSIC            0x17
 #define EXT_CTRL_CODE_RESUME_MUSIC           0x18
+#define EXT_CTRL_CODE_SPEAKER                0x19
+#define EXT_CTRL_CODE_ACCENT                 0x1A
+#define EXT_CTRL_CODE_BACKGROUND             0x1B
+#define EXT_CTRL_CODE_TEXT_COLORS            0x1C
 
 #define TEXT_COLOR_TRANSPARENT  0x0
 #define TEXT_COLOR_WHITE        0x1
@@ -262,6 +269,7 @@
 #define PLACEHOLDER_ID_MAXIE         0xB
 #define PLACEHOLDER_ID_KYOGRE        0xC
 #define PLACEHOLDER_ID_GROUDON       0xD
+#define PLACEHOLDER_ID_REGION        0xE
 
 // battle placeholders are located in battle_message.h
 

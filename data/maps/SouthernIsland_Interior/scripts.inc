@@ -57,7 +57,8 @@ SouthernIsland_Interior_EventScript_Lati::
 	setflag FLAG_ENCOUNTERED_LATIAS_OR_LATIOS
 	setflag FLAG_TEMP_2
 	special SpawnCameraObject
-	applywaitmovement LOCALID_CAMERA, SouthernIsland_Interior_Movement_CameraPanUp
+	applymovement LOCALID_CAMERA, SouthernIsland_Interior_Movement_CameraPanUp
+	waitmovement 0
 	delay 50
 	waitse
 	playmoncry VAR_TEMP_4, CRY_MODE_NORMAL

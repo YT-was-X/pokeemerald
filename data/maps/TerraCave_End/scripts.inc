@@ -24,8 +24,10 @@ TerraCave_End_EventScript_ShowGroudon::
 
 TerraCave_End_EventScript_Groudon::
 	lockall
-	applywaitmovement LOCALID_PLAYER, Common_Movement_FaceUp
-	applywaitmovement LOCALID_TERRA_CAVE_GROUDON, TerraCave_End_Movement_GroudonApproach
+	applymovement LOCALID_PLAYER, Common_Movement_FaceUp
+	waitmovement 0
+	applymovement LOCALID_TERRA_CAVE_GROUDON, TerraCave_End_Movement_GroudonApproach
+	waitmovement 0
 	waitse
 	playmoncry SPECIES_GROUDON, CRY_MODE_ENCOUNTER
 	delay 40

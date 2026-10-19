@@ -3,11 +3,11 @@
 
 #include "main.h"
 
-// Each 4 KiB flash sector contains 3968 bytes of actual data followed by a 128 byte footer.
-// Only 12 bytes of the footer are used.
+// Each 4 KiB flash sector contains 3968 bytes of actual data followed by 116 bytes of SaveBlock3 and then 12 bytes of footer.
 #define SECTOR_DATA_SIZE 3968
-#define SECTOR_FOOTER_SIZE 128
-#define SECTOR_SIZE (SECTOR_DATA_SIZE + SECTOR_FOOTER_SIZE)
+#define SAVE_BLOCK_3_CHUNK_SIZE 116
+#define SECTOR_FOOTER_SIZE 12
+#define SECTOR_SIZE (SECTOR_DATA_SIZE + SAVE_BLOCK_3_CHUNK_SIZE + SECTOR_FOOTER_SIZE)
 
 #define NUM_SAVE_SLOTS 2
 
@@ -29,9 +29,6 @@
 #define SECTOR_ID_RECORDED_BATTLE    31
 #define SECTORS_COUNT                32
 
-#define NUM_SAVEBLOCK1_SECTORS (SECTOR_ID_SAVEBLOCK1_END - SECTOR_ID_SAVEBLOCK1_START + 1)
-#define NUM_SAVEBLOCK2_SECTORS (NUM_SECTORS_PER_SLOT - NUM_SAVEBLOCK1_SECTORS - NUM_PKMN_STORAGE_SECTORS)
-#define NUM_PKMN_STORAGE_SECTORS (SECTOR_ID_PKMN_STORAGE_END - SECTOR_ID_PKMN_STORAGE_START + 1)
 #define NUM_HOF_SECTORS 2
 
 #define SAVE_STATUS_EMPTY    0
@@ -74,7 +71,7 @@ struct SaveSectorLocation
 struct SaveSector
 {
     u8 data[SECTOR_DATA_SIZE];
-    u8 unused[SECTOR_FOOTER_SIZE - 12]; // Unused portion of the footer
+    u8 saveBlock3Chunk[SAVE_BLOCK_3_CHUNK_SIZE];
     u16 id;
     u16 checksum;
     u32 signature;

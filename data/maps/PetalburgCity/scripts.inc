@@ -84,7 +84,8 @@ PetalburgCity_EventScript_Boy::
 	faceplayer
 	msgbox PetalburgCity_Text_WaterReflection, MSGBOX_DEFAULT
 	closemessage
-	applywaitmovement LOCALID_PETALBURG_BOY, Common_Movement_FaceOriginalDirection
+	applymovement LOCALID_PETALBURG_BOY, Common_Movement_FaceOriginalDirection
+	waitmovement 0
 	release
 	end
 
@@ -257,11 +258,14 @@ PetalburgCity_EventScript_ShowGymToPlayer3::
 	end
 
 PetalburgCity_EventScript_ShowGymToPlayer::
-	applywaitmovement LOCALID_GYM_BOY, Common_Movement_FacePlayer
+	applymovement LOCALID_GYM_BOY, Common_Movement_FacePlayer
+	waitmovement 0
 	playbgm MUS_FOLLOW_ME, FALSE
 	playse SE_PIN
-	applywaitmovement LOCALID_GYM_BOY, Common_Movement_ExclamationMark
-	applywaitmovement LOCALID_GYM_BOY, Common_Movement_Delay48
+	applymovement LOCALID_GYM_BOY, Common_Movement_ExclamationMark
+	waitmovement 0
+	applymovement LOCALID_GYM_BOY, Common_Movement_Delay48
+	waitmovement 0
 	call_if_eq VAR_0x8008, 0, PetalburgCity_EventScript_BoyApproachPlayer0
 	call_if_eq VAR_0x8008, 1, PetalburgCity_EventScript_BoyApproachPlayer1
 	call_if_eq VAR_0x8008, 2, PetalburgCity_EventScript_BoyApproachPlayer2
@@ -278,28 +282,36 @@ PetalburgCity_EventScript_ShowGymToPlayer::
 	waitmovement 0
 	msgbox PetalburgCity_Text_ThisIsGymSign, MSGBOX_DEFAULT
 	closemessage
-	applywaitmovement LOCALID_GYM_BOY, PetalburgCity_Movement_BoyWalkAway
+	applymovement LOCALID_GYM_BOY, PetalburgCity_Movement_BoyWalkAway
+	waitmovement 0
 	fadedefaultbgm
 	releaseall
 	end
 
 PetalburgCity_EventScript_BoyApproachPlayer0::
-	applywaitmovement LOCALID_GYM_BOY, PetalburgCity_Movement_BoyApproachPlayer0
-	applywaitmovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterDown
+	applymovement LOCALID_GYM_BOY, PetalburgCity_Movement_BoyApproachPlayer0
+	waitmovement 0
+	applymovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterDown
+	waitmovement 0
 	return
 
 PetalburgCity_EventScript_BoyApproachPlayer1::
-	applywaitmovement LOCALID_GYM_BOY, PetalburgCity_Movement_BoyApproachPlayer1
+	applymovement LOCALID_GYM_BOY, PetalburgCity_Movement_BoyApproachPlayer1
+	waitmovement 0
 	return
 
 PetalburgCity_EventScript_BoyApproachPlayer2::
-	applywaitmovement LOCALID_GYM_BOY, PetalburgCity_Movement_BoyApproachPlayer2
-	applywaitmovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterUp
+	applymovement LOCALID_GYM_BOY, PetalburgCity_Movement_BoyApproachPlayer2
+	waitmovement 0
+	applymovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterUp
+	waitmovement 0
 	return
 
 PetalburgCity_EventScript_BoyApproachPlayer3::
-	applywaitmovement LOCALID_GYM_BOY, PetalburgCity_Movement_BoyApproachPlayer3
-	applywaitmovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterUp
+	applymovement LOCALID_GYM_BOY, PetalburgCity_Movement_BoyApproachPlayer3
+	waitmovement 0
+	applymovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterUp
+	waitmovement 0
 	return
 
 PetalburgCity_EventScript_LeadPlayerToGym0::
@@ -516,20 +528,27 @@ PetalburgCity_EventScript_Scott3::
 	end
 
 PetalburgCity_EventScript_Scott::
-	applywaitmovement LOCALID_PETALBURG_SCOTT, PetalburgCity_Movement_ScottStartWalkLeft
+	applymovement LOCALID_PETALBURG_SCOTT, PetalburgCity_Movement_ScottStartWalkLeft
+	waitmovement 0
 	playse SE_PIN
-	applywaitmovement LOCALID_PETALBURG_SCOTT, Common_Movement_ExclamationMark
-	applywaitmovement LOCALID_PETALBURG_SCOTT, Common_Movement_Delay48
-	applywaitmovement LOCALID_PETALBURG_SCOTT, PetalburgCity_Movement_ScottApproachPlayer
-	applywaitmovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterRight
+	applymovement LOCALID_PETALBURG_SCOTT, Common_Movement_ExclamationMark
+	waitmovement 0
+	applymovement LOCALID_PETALBURG_SCOTT, Common_Movement_Delay48
+	waitmovement 0
+	applymovement LOCALID_PETALBURG_SCOTT, PetalburgCity_Movement_ScottApproachPlayer
+	waitmovement 0
+	applymovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterRight
+	waitmovement 0
 	setvar VAR_SCOTT_STATE, 1
 	msgbox PetalburgCity_Text_AreYouATrainer, MSGBOX_DEFAULT
 	closemessage
-	applywaitmovement LOCALID_PETALBURG_SCOTT, Common_Movement_WalkInPlaceFasterRight
+	applymovement LOCALID_PETALBURG_SCOTT, Common_Movement_WalkInPlaceFasterRight
+	waitmovement 0
 	delay 30
 	msgbox PetalburgCity_Text_WellMaybeNot, MSGBOX_DEFAULT
 	closemessage
-	applywaitmovement LOCALID_PETALBURG_SCOTT, Common_Movement_WalkInPlaceFasterLeft
+	applymovement LOCALID_PETALBURG_SCOTT, Common_Movement_WalkInPlaceFasterLeft
+	waitmovement 0
 	delay 30
 	msgbox PetalburgCity_Text_ImLookingForTalentedTrainers, MSGBOX_DEFAULT
 	closemessage

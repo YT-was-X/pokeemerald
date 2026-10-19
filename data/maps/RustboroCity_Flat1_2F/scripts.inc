@@ -50,7 +50,8 @@ RustboroCity_Flat1_2F_EventScript_WaldaLikesPhrase::
 	msgbox RustboroCity_Flat1_2F_Text_LetsGiveItATry2, MSGBOX_DEFAULT
 	call RustboroCity_Flat1_2F_EventScript_WaldasDadFaceWalda
 	msgbox RustboroCity_Flat1_2F_Text_OhShesLaughing, MSGBOX_DEFAULT
-	applywaitmovement LOCALID_WALDAS_DAD, Common_Movement_FacePlayer
+	applymovement LOCALID_WALDAS_DAD, Common_Movement_FacePlayer
+	waitmovement 0
 	msgbox RustboroCity_Flat1_2F_Text_ThankYouIllGiveYouWallpaper, MSGBOX_DEFAULT
 	release
 	end

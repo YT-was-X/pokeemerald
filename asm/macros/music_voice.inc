@@ -4,22 +4,12 @@
 	.endm
 
 	.macro voice_directsound_no_resample base_midi_key:req, pan:req, sample_data_pointer:req, attack:req, decay:req, sustain:req, release:req
-	.byte 0x8
+	.byte 8
 	_voice_directsound \base_midi_key, \pan, \sample_data_pointer, \attack, \decay, \sustain, \release
 	.endm
 
-	.macro voice_directsound_reverse base_midi_key:req, pan:req, sample_data_pointer:req, attack:req, decay:req, sustain:req, release:req
-	.byte 0x10
-	_voice_directsound \base_midi_key, \pan, \sample_data_pointer, \attack, \decay, \sustain, \release
-	.endm
-
-	.macro voice_directsound_compressed base_midi_key:req, pan:req, sample_data_pointer:req, attack:req, decay:req, sustain:req, release:req
-	.byte 0x20
-	_voice_directsound \base_midi_key, \pan, \sample_data_pointer, \attack, \decay, \sustain, \release
-	.endm
-
-	.macro voice_directsound_compressed_reverse base_midi_key:req, pan:req, sample_data_pointer:req, attack:req, decay:req, sustain:req, release:req
-	.byte 0x30
+	.macro voice_directsound_alt base_midi_key:req, pan:req, sample_data_pointer:req, attack:req, decay:req, sustain:req, release:req
+	.byte 16
 	_voice_directsound \base_midi_key, \pan, \sample_data_pointer, \attack, \decay, \sustain, \release
 	.endm
 
@@ -150,9 +140,25 @@
 	.endm
 
 	.macro cry sample:req
-	voice_directsound_compressed 60, 0, \sample, 255, 0, 255, 0
+	.byte 0x20, 60, 0, 0
+	.4byte \sample
+	.byte 0xff, 0, 0xff, 0
 	.endm
 
 	.macro cry_reverse sample:req
-	voice_directsound_compressed_reverse 60, 0, \sample, 255, 0, 255, 0
+	.byte 0x30, 60, 0, 0
+	.4byte \sample
+	.byte 0xff, 0, 0xff, 0
+	.endm
+
+	.macro cry_uncomp sample @ not compressed
+	.byte 0x0, 60, 0, 0
+	.4byte \sample
+	.byte 0xff, 0, 0xff, 0
+	.endm
+
+	.macro cry_reverse_uncomp sample @ not compressed
+	.byte 0x10, 60, 0, 0
+	.4byte \sample
+	.byte 0xff, 0, 0xff, 0
 	.endm

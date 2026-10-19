@@ -53,7 +53,8 @@ MossdeepCity_SpaceCenter_1F_EventScript_RocketLaunchCounter::
 	call_if_eq VAR_RESULT, 0, MossdeepCity_SpaceCenter_1F_EventScript_NoLaunchesYet
 	call_if_ge VAR_RESULT, 1, MossdeepCity_SpaceCenter_1F_EventScript_ShowLaunchNumber
 	closemessage
-	applywaitmovement VAR_LAST_TALKED, Common_Movement_FaceOriginalDirection
+	applymovement VAR_LAST_TALKED, Common_Movement_FaceOriginalDirection
+	waitmovement 0
 	release
 	end
 
@@ -72,7 +73,8 @@ MossdeepCity_SpaceCenter_1F_EventScript_RocketLaunchCounterMagma::
 	call_if_eq VAR_RESULT, 0, MossdeepCity_SpaceCenter_1F_EventScript_NoLaunchesYetMagma
 	call_if_ge VAR_RESULT, 1, MossdeepCity_SpaceCenter_1F_EventScript_ShowLaunchNumberMagma
 	closemessage
-	applywaitmovement VAR_LAST_TALKED, Common_Movement_WalkInPlaceFasterRight
+	applymovement VAR_LAST_TALKED, Common_Movement_WalkInPlaceFasterRight
+	waitmovement 0
 	release
 	end
 
@@ -94,7 +96,8 @@ MossdeepCity_SpaceCenter_1F_EventScript_Scientist::
 
 MossdeepCity_SpaceCenter_1F_EventScript_ScientistMagma::
 	msgbox MossdeepCity_SpaceCenter_1F_Text_MagmaHaveSightsOnSpaceCenter, MSGBOX_DEFAULT
-	applywaitmovement VAR_LAST_TALKED, Common_Movement_WalkInPlaceFasterRight
+	applymovement VAR_LAST_TALKED, Common_Movement_WalkInPlaceFasterRight
+	waitmovement 0
 	release
 	end
 
@@ -123,13 +126,15 @@ MossdeepCity_SpaceCenter_1F_EventScript_SunStoneManMagma::
 	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
 	setflag FLAG_RECEIVED_SUN_STONE_MOSSDEEP
 	msgbox MossdeepCity_SpaceCenter_1F_Text_CantStrollOnBeachWithMagma, MSGBOX_DEFAULT
-	applywaitmovement VAR_LAST_TALKED, Common_Movement_WalkInPlaceFasterRight
+	applymovement VAR_LAST_TALKED, Common_Movement_WalkInPlaceFasterRight
+	waitmovement 0
 	release
 	end
 
 MossdeepCity_SpaceCenter_1F_EventScript_GaveSunStoneMagma::
 	msgbox MossdeepCity_SpaceCenter_1F_Text_CantStrollOnBeachWithMagma, MSGBOX_DEFAULT
-	applywaitmovement VAR_LAST_TALKED, Common_Movement_WalkInPlaceFasterRight
+	applymovement VAR_LAST_TALKED, Common_Movement_WalkInPlaceFasterRight
+	waitmovement 0
 	release
 	end
 
@@ -164,14 +169,16 @@ MossdeepCity_SpaceCenter_1F_EventScript_OldMan::
 MossdeepCity_SpaceCenter_1F_EventScript_OldManNormal::
 	msgbox MossdeepCity_SpaceCenter_1F_Text_RocketsBoggleMyMind, MSGBOX_DEFAULT
 	closemessage
-	applywaitmovement VAR_LAST_TALKED, Common_Movement_FaceOriginalDirection
+	applymovement VAR_LAST_TALKED, Common_Movement_FaceOriginalDirection
+	waitmovement 0
 	release
 	end
 
 MossdeepCity_SpaceCenter_1F_EventScript_OldManMagma::
 	msgbox MossdeepCity_SpaceCenter_1F_Text_MagmaWantsToSpoilMyDream, MSGBOX_DEFAULT
 	closemessage
-	applywaitmovement VAR_LAST_TALKED, Common_Movement_FaceOriginalDirection
+	applymovement VAR_LAST_TALKED, Common_Movement_FaceOriginalDirection
+	waitmovement 0
 	release
 	end
 
@@ -179,7 +186,8 @@ MossdeepCity_SpaceCenter_1F_EventScript_Steven::
 	lock
 	faceplayer
 	msgbox MossdeepCity_SpaceCenter_1F_Text_StevenMagmaCantBeAllowedToTakeFuel, MSGBOX_DEFAULT
-	applywaitmovement VAR_LAST_TALKED, Common_Movement_FaceOriginalDirection
+	applymovement VAR_LAST_TALKED, Common_Movement_FaceOriginalDirection
+	waitmovement 0
 	release
 	end
 
@@ -219,7 +227,8 @@ MossdeepCity_SpaceCenter_1F_EventScript_Grunt2::
 #else
 	case DIR_WEST, MossdeepCity_SpaceCenter_1F_EventScript_MoveGruntFromStairsEast
 #endif
-	applywaitmovement LOCALID_SPACE_CENTER_1F_STAIR_GRUNT, MossdeepCity_SpaceCenter_1F_Movement_MoveGruntFromStairs
+	applymovement LOCALID_SPACE_CENTER_1F_STAIR_GRUNT, MossdeepCity_SpaceCenter_1F_Movement_MoveGruntFromStairs
+	waitmovement 0
 	setvar VAR_MOSSDEEP_SPACE_CENTER_STAIR_GUARD_STATE, 2
 	release
 	end
@@ -230,7 +239,8 @@ MossdeepCity_SpaceCenter_1F_EventScript_Grunt2Defeated::
 	end
 
 MossdeepCity_SpaceCenter_1F_EventScript_MoveGruntFromStairsWest::
-	applywaitmovement LOCALID_SPACE_CENTER_1F_STAIR_GRUNT, MossdeepCity_SpaceCenter_1F_Movement_MoveGruntFromStairsWest
+	applymovement LOCALID_SPACE_CENTER_1F_STAIR_GRUNT, MossdeepCity_SpaceCenter_1F_Movement_MoveGruntFromStairsWest
+	waitmovement 0
 	setvar VAR_MOSSDEEP_SPACE_CENTER_STAIR_GUARD_STATE, 1
 	release
 	end
@@ -238,7 +248,8 @@ MossdeepCity_SpaceCenter_1F_EventScript_MoveGruntFromStairsWest::
 @ Functionally unused by mistake. The movement is handled anyway after the switch (see above)
 @ This also means VAR_MOSSDEEP_SPACE_CENTER_STAIR_GUARD_STATE can never be 3
 MossdeepCity_SpaceCenter_1F_EventScript_MoveGruntFromStairsEast::
-	applywaitmovement LOCALID_SPACE_CENTER_1F_STAIR_GRUNT, MossdeepCity_SpaceCenter_1F_Movement_MoveGruntFromStairsEast
+	applymovement LOCALID_SPACE_CENTER_1F_STAIR_GRUNT, MossdeepCity_SpaceCenter_1F_Movement_MoveGruntFromStairsEast
+	waitmovement 0
 	setvar VAR_MOSSDEEP_SPACE_CENTER_STAIR_GUARD_STATE, 3
 	release
 	end

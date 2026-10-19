@@ -32,6 +32,7 @@ Route118_EventScript_GoodRodFisherman::
 Route118_EventScript_ReceiveGoodRod::
 	msgbox Route118_Text_IdenticalMindsTakeThis, MSGBOX_DEFAULT
 	giveitem ITEM_GOOD_ROD
+	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
 	setflag FLAG_RECEIVED_GOOD_ROD
 	msgbox Route118_Text_TryYourLuckFishing, MSGBOX_DEFAULT
 	release
@@ -62,29 +63,35 @@ Route118_EventScript_RouteSign119::
 Route118_EventScript_StevenTrigger0::
 	lockall
 	setvar VAR_0x8008, 0
-	applywaitmovement LOCALID_PLAYER, Common_Movement_FaceUp
-	applywaitmovement LOCALID_ROUTE118_STEVEN, Route118_Movement_StevenApproachLedge0
+	applymovement LOCALID_PLAYER, Common_Movement_FaceUp
+	waitmovement 0
+	applymovement LOCALID_ROUTE118_STEVEN, Route118_Movement_StevenApproachLedge0
+	waitmovement 0
 	goto Route118_EventScript_StevenTrigger
 	end
 
 Route118_EventScript_StevenTrigger1::
 	lockall
 	setvar VAR_0x8008, 1
-	applywaitmovement LOCALID_PLAYER, Common_Movement_FaceUp
+	applymovement LOCALID_PLAYER, Common_Movement_FaceUp
+	waitmovement 0
 	goto Route118_EventScript_StevenTrigger
 	end
 
 Route118_EventScript_StevenTrigger2::
 	lockall
 	setvar VAR_0x8008, 2
-	applywaitmovement LOCALID_PLAYER, Common_Movement_FaceUp
-	applywaitmovement LOCALID_ROUTE118_STEVEN, Route118_Movement_StevenApproachLedge2
+	applymovement LOCALID_PLAYER, Common_Movement_FaceUp
+	waitmovement 0
+	applymovement LOCALID_ROUTE118_STEVEN, Route118_Movement_StevenApproachLedge2
+	waitmovement 0
 	goto Route118_EventScript_StevenTrigger
 	end
 
 Route118_EventScript_StevenTrigger::
 	playse SE_LEDGE
-	applywaitmovement LOCALID_ROUTE118_STEVEN, Route118_Movement_StevenJumpLedge
+	applymovement LOCALID_ROUTE118_STEVEN, Route118_Movement_StevenJumpLedge
+	waitmovement 0
 	delay 30
 	msgbox Route118_Text_StevenQuestions, MSGBOX_DEFAULT
 	closemessage

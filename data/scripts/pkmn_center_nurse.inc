@@ -2,8 +2,10 @@ Common_EventScript_PkmnCenterNurse::
 	lock
 	faceplayer
 	setvar VAR_0x8004, 0
+.if !IS_FRLG
 	specialvar VAR_RESULT, CountPlayerTrainerStars
 	goto_if_eq VAR_RESULT, 4, EventScript_PkmnCenterNurse_GoldCard
+.endif
 	msgbox gText_WouldYouLikeToRestYourPkmn, MSGBOX_YESNO
 	goto_if_eq VAR_RESULT, YES, EventScript_PkmnCenterNurse_HealPkmn
 	goto_if_eq VAR_RESULT, NO, EventScript_PkmnCenterNurse_Goodbye
@@ -33,11 +35,20 @@ EventScript_PkmnCenterNurse_IllTakeYourPkmn2::
 	return
 
 EventScript_PkmnCenterNurse_TakeAndHealPkmn::
-	applywaitmovement VAR_0x800B, Common_Movement_WalkInPlaceFasterLeft
+	hidefollower 0
+	applymovement VAR_0x800B, Movement_PkmnCenterNurse_Turn
+	waitmovement 0
 	dofieldeffect FLDEFF_POKECENTER_HEAL
+.if OW_UNION_DISABLE_CHECK == FALSE && OW_FLAG_MOVE_UNION_ROOM_CHECK != 0
+	setflag OW_FLAG_MOVE_UNION_ROOM_CHECK
+	call CableClub_OnResume
+	clearflag OW_FLAG_MOVE_UNION_ROOM_CHECK
+.endif
 	waitfieldeffect FLDEFF_POKECENTER_HEAL
-	applywaitmovement VAR_0x800B, Common_Movement_WalkInPlaceFasterDown
+	applymovement VAR_0x800B, Common_Movement_WalkInPlaceFasterDown
+	waitmovement 0
 	special HealPlayerParty
+	callnative UpdateFollowingPokemon
 	return
 
 EventScript_PkmnCenterNurse_CheckTrainerHillAndUnionRoom::
@@ -54,14 +65,16 @@ EventScript_PkmnCenterNurse_ReturnPkmn::
 	goto_if_eq VAR_0x8004, 1, EventScript_PkmnCenterNurse_ReturnPkmn2
 	message gText_RestoredPkmnToFullHealth
 	waitmessage
-	applywaitmovement VAR_0x800B, Movement_PkmnCenterNurse_Bow
+	applymovement VAR_0x800B, Movement_PkmnCenterNurse_Bow
+	waitmovement 0
 	message gText_WeHopeToSeeYouAgain
 	return
 
 EventScript_PkmnCenterNurse_ReturnPkmn2::
 	message gText_ThankYouForWaiting
 	waitmessage
-	applywaitmovement VAR_0x800B, Movement_PkmnCenterNurse_Bow
+	applymovement VAR_0x800B, Movement_PkmnCenterNurse_Bow
+	waitmovement 0
 	message gText_WeHopeToSeeYouAgain2
 	return
 
@@ -71,7 +84,8 @@ EventScript_PkmnCenterNurse_PlayerWaitingInUnionRoom::
 	setflag FLAG_NURSE_UNION_ROOM_REMINDER
 	message CableClub_Text_PlayerIsWaiting
 	waitmessage
-	applywaitmovement VAR_0x800B, Movement_PkmnCenterNurse_Bow
+	applymovement VAR_0x800B, Movement_PkmnCenterNurse_Bow
+	waitmovement 0
 	message gText_WeHopeToSeeYouAgain
 	return
 
@@ -91,8 +105,10 @@ EventScript_PkmnCenterNurse_GoldCard::
 	setflag FLAG_NURSE_MENTIONS_GOLD_CARD
 	msgbox gText_WelcomeCutShort, MSGBOX_DEFAULT
 	playse SE_PIN
-	applywaitmovement VAR_0x800B, Common_Movement_ExclamationMark
-	applywaitmovement VAR_0x800B, Common_Movement_Delay48
+	applymovement VAR_0x800B, Common_Movement_ExclamationMark
+	waitmovement 0
+	applymovement VAR_0x800B, Common_Movement_Delay48
+	waitmovement 0
 	msgbox gText_NoticesGoldCard, MSGBOX_YESNO
 	goto_if_eq VAR_RESULT, YES, EventScript_PkmnCenterNurse_GoldCardHealPkmn
 	message gText_WeHopeToSeeYouAgain2
@@ -112,4 +128,8 @@ EventScript_PkmnCenterNurse_GoldCardHealPkmn::
 Movement_PkmnCenterNurse_Bow:
 	nurse_joy_bow
 	delay_4
+	step_end
+
+Movement_PkmnCenterNurse_Turn:
+	walk_in_place_faster_left
 	step_end

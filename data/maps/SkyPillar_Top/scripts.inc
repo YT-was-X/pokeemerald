@@ -87,11 +87,14 @@ SkyPillar_Top_EventScript_RanFromRayquaza2::
 SkyPillar_Top_EventScript_AwakenRayquaza::
 	lockall
 	fadeoutbgm 1
-	applywaitmovement LOCALID_PLAYER, Common_Movement_FaceUp
+	applymovement LOCALID_PLAYER, Common_Movement_FaceUp
+	waitmovement 0
 	special SpawnCameraObject
-	applywaitmovement LOCALID_CAMERA, SkyPillar_Top_Movement_CameraPanUp
+	applymovement LOCALID_CAMERA, SkyPillar_Top_Movement_CameraPanUp
+	waitmovement 0
 	special RemoveCameraObject
-	applywaitmovement LOCALID_RAYQUAZA_SLEEPING, SkyPillar_Top_Movement_RayquazaStir
+	applymovement LOCALID_RAYQUAZA_SLEEPING, SkyPillar_Top_Movement_RayquazaStir
+	waitmovement 0
 	waitse
 	playmoncry SPECIES_RAYQUAZA, CRY_MODE_ENCOUNTER
 	setvar VAR_0x8004, 1  @ vertical pan
@@ -109,14 +112,16 @@ SkyPillar_Top_EventScript_AwakenRayquaza::
 	special ShakeCamera
 	waitstate
 	waitmoncry
-	applywaitmovement LOCALID_RAYQUAZA_SLEEPING, SkyPillar_Top_Movement_RayquazaFlyOff
+	applymovement LOCALID_RAYQUAZA_SLEEPING, SkyPillar_Top_Movement_RayquazaFlyOff
+	waitmovement 0
 	removeobject LOCALID_RAYQUAZA_SLEEPING
 	msgbox SkyPillar_Top_Text_RayquazaFlewOff, MSGBOX_DEFAULT
 	closemessage
 	delay 20
 	fadeinbgm 1
 	special SpawnCameraObject
-	applywaitmovement LOCALID_CAMERA, SkyPillar_Top_Movement_CameraPanDown
+	applymovement LOCALID_CAMERA, SkyPillar_Top_Movement_CameraPanDown
+	waitmovement 0
 	special RemoveCameraObject
 	setvar VAR_SOOTOPOLIS_CITY_STATE, 5
 	setvar VAR_SKY_PILLAR_STATE, 1

@@ -14,18 +14,24 @@ Route128_OnFrame:
 Route128_EventScript_KyogreAwakenedScene::
 	lockall
 	delay 20
-	applywaitmovement LOCALID_ROUTE128_ARCHIE, Route128_Movement_ArchieLookAround
+	applymovement LOCALID_ROUTE128_ARCHIE, Route128_Movement_ArchieLookAround
+	waitmovement 0
 	msgbox Route128_Text_ArchieWhatHappened, MSGBOX_DEFAULT
 	closemessage
-	applywaitmovement LOCALID_ROUTE128_ARCHIE, Route128_Movement_ArchieBackUp
+	applymovement LOCALID_ROUTE128_ARCHIE, Route128_Movement_ArchieBackUp
+	waitmovement 0
 	msgbox Route128_Text_ArchieIOnlyWanted, MSGBOX_DEFAULT
 	closemessage
-	applywaitmovement LOCALID_ROUTE128_MAXIE, Route128_Movement_MaxieApproachArchie
-	applywaitmovement LOCALID_ROUTE128_ARCHIE, Common_Movement_WalkInPlaceFasterUp
+	applymovement LOCALID_ROUTE128_MAXIE, Route128_Movement_MaxieApproachArchie
+	waitmovement 0
+	applymovement LOCALID_ROUTE128_ARCHIE, Common_Movement_WalkInPlaceFasterUp
+	waitmovement 0
 	msgbox Route128_Text_MaxieDoYouUnderstandNow, MSGBOX_DEFAULT
 	closemessage
-	applywaitmovement LOCALID_ROUTE128_MAXIE, Route128_Movement_MaxieApproachPlayer
-	applywaitmovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterUp
+	applymovement LOCALID_ROUTE128_MAXIE, Route128_Movement_MaxieApproachPlayer
+	waitmovement 0
+	applymovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterUp
+	waitmovement 0
 	msgbox Route128_Text_MaxieResposibilityFallsToArchieAndMe, MSGBOX_DEFAULT
 	closemessage
 	applymovement LOCALID_ROUTE128_ARCHIE, Route128_Movement_ArchieRunLeft
@@ -45,18 +51,22 @@ Route128_EventScript_KyogreAwakenedScene::
 	dofieldeffect FLDEFF_NPCFLY_OUT
 	waitfieldeffect FLDEFF_NPCFLY_OUT
 	addobject LOCALID_ROUTE128_STEVEN
-	applywaitmovement LOCALID_ROUTE128_STEVEN, Route128_Movement_StevenApproachPlayer
-	applywaitmovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterRight
+	applymovement LOCALID_ROUTE128_STEVEN, Route128_Movement_StevenApproachPlayer
+	waitmovement 0
+	applymovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterRight
+	waitmovement 0
 	msgbox Route128_Text_StevenWhatIsHappening, MSGBOX_DEFAULT
 	closemessage
 	applymovement LOCALID_ROUTE128_STEVEN, Route128_Movement_StevenWalkUp
 	applymovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterUp
 	waitmovement 0
 	msgbox Route128_Text_StevenWholeWorldWillDrown, MSGBOX_DEFAULT
-	applywaitmovement LOCALID_ROUTE128_STEVEN, Common_Movement_WalkInPlaceFasterDown
+	applymovement LOCALID_ROUTE128_STEVEN, Common_Movement_WalkInPlaceFasterDown
+	waitmovement 0
 	msgbox Route128_Text_StevenImGoingToSootopolis, MSGBOX_DEFAULT
 	closemessage
-	applywaitmovement LOCALID_ROUTE128_STEVEN, Common_Movement_WalkInPlaceFasterDown
+	applymovement LOCALID_ROUTE128_STEVEN, Common_Movement_WalkInPlaceFasterDown
+	waitmovement 0
 	delay 50
 	setfieldeffectargument 0, 1
 	dofieldeffect FLDEFF_NPCFLY_OUT

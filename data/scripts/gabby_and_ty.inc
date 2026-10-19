@@ -215,7 +215,8 @@ GabbyAndTy_EventScript_FirstInterview::
 	end
 
 GabbyAndTy_EventScript_FacePlayerNorth::
-	applywaitmovement VAR_0x8004, GabbyAndTy_Movement_WalkInPlaceDown
+	applymovement VAR_0x8004, GabbyAndTy_Movement_WalkInPlaceDown
+	waitmovement 0
 	return
 
 GabbyAndTy_EventScript_FacePlayerSouth::

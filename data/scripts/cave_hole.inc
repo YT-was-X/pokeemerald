@@ -13,7 +13,8 @@ CaveHole_FixCrackedGround:
 EventScript_FallDownHole::
 	lockall
 	delay 20
-	applywaitmovement LOCALID_PLAYER, Movement_SetInvisible
+	applymovement LOCALID_PLAYER, Movement_SetInvisible
+	waitmovement 0
 	playse SE_FALL
 	delay 60
 	warphole MAP_UNDEFINED
@@ -23,7 +24,8 @@ EventScript_FallDownHole::
 EventScript_FallDownHoleMtPyre::
 	lockall
 	delay 20
-	applywaitmovement LOCALID_PLAYER, Movement_SetInvisible
+	applymovement LOCALID_PLAYER, Movement_SetInvisible
+	waitmovement 0
 	playse SE_FALL
 	delay 60
 	special DoFallWarp

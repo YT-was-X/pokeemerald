@@ -1,5 +1,6 @@
 PokemonLeague_EliteFour_SetAdvanceToNextRoomMetatiles::
-	applywaitmovement LOCALID_PLAYER, Common_Movement_Delay32
+	applymovement LOCALID_PLAYER, Common_Movement_Delay32
+	waitmovement 0
 	playse SE_DOOR
 	setmetatile 6, 1, METATILE_EliteFour_OpenDoor_Frame, FALSE
 	setmetatile 6, 2, METATILE_EliteFour_OpenDoor_Opening, FALSE
@@ -17,7 +18,8 @@ PokemonLeague_EliteFour_SetAdvanceToNextRoomMetatiles::
 	return
 
 PokemonLeague_EliteFour_EventScript_WalkInCloseDoor::
-	applywaitmovement LOCALID_PLAYER, Common_Movement_WalkUp6
+	applymovement LOCALID_PLAYER, Common_Movement_WalkUp6
+	waitmovement 0
 	playse SE_TRUCK_DOOR
 	setmetatile 5, 12, METATILE_EliteFour_EntryDoor_ClosedTop, TRUE
 	setmetatile 6, 12, METATILE_EliteFour_EntryDoor_ClosedTop, TRUE

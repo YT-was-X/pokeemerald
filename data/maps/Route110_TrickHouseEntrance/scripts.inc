@@ -203,9 +203,11 @@ Route110_TrickHouseEntrance_EventScript_BeginChallenge::
 	msgbox Route110_TrickHouseEntrance_Text_ComeToChallengeTrickHouse, MSGBOX_DEFAULT
 	closemessage
 	delay 20
-	applywaitmovement LOCALID_TRICK_MASTER, Route110_TrickHouse_Movement_TrickMasterSpin
+	applymovement LOCALID_TRICK_MASTER, Route110_TrickHouse_Movement_TrickMasterSpin
+	waitmovement 0
 	playse SE_M_EXPLOSION
-	applywaitmovement LOCALID_TRICK_MASTER, Route110_TrickHouse_Movement_TrickMasterJumpAway
+	applymovement LOCALID_TRICK_MASTER, Route110_TrickHouse_Movement_TrickMasterJumpAway
+	waitmovement 0
 	removeobject LOCALID_TRICK_MASTER
 	setvar VAR_TRICK_HOUSE_ENTRANCE_STATE, 1
 	setvar VAR_TRICK_HOUSE_FOUND_TRICK_MASTER, 0
@@ -227,8 +229,10 @@ Route110_TrickHouseEntrance_EventScript_TrickMaster::
 
 Route110_TrickHouseEntrance_EventScript_FoundTrickMaster::
 	playse SE_PIN
-	applywaitmovement LOCALID_PLAYER, Common_Movement_ExclamationMark
-	applywaitmovement LOCALID_PLAYER, Common_Movement_Delay48
+	applymovement LOCALID_PLAYER, Common_Movement_ExclamationMark
+	waitmovement 0
+	applymovement LOCALID_PLAYER, Common_Movement_Delay48
+	waitmovement 0
 	call_if_eq VAR_TRICK_HOUSE_LEVEL, 0, Route110_TrickHouseEntrance_EventScript_FoundBeneathDesk
 	call_if_eq VAR_TRICK_HOUSE_LEVEL, 1, Route110_TrickHouseEntrance_EventScript_FoundBehindTree
 	call_if_eq VAR_TRICK_HOUSE_LEVEL, 2, Route110_TrickHouseEntrance_EventScript_FoundInDresser
@@ -305,17 +309,22 @@ Route110_TrickHouseEntrance_EventScript_MeetTrickMaster::
 Route110_TrickHouseEntrance_EventScript_StillMakingPuzzle::
 	msgbox Route110_TrickHouseEntrance_Text_NextTimeUseThisTrick, MSGBOX_DEFAULT
 	closemessage
-	applywaitmovement LOCALID_TRICK_MASTER, Common_Movement_FacePlayer
+	applymovement LOCALID_TRICK_MASTER, Common_Movement_FacePlayer
+	waitmovement 0
 	playse SE_PIN
-	applywaitmovement LOCALID_TRICK_MASTER, Common_Movement_ExclamationMark
-	applywaitmovement LOCALID_TRICK_MASTER, Common_Movement_Delay48
+	applymovement LOCALID_TRICK_MASTER, Common_Movement_ExclamationMark
+	waitmovement 0
+	applymovement LOCALID_TRICK_MASTER, Common_Movement_Delay48
+	waitmovement 0
 	msgbox Route110_TrickHouseEntrance_Text_InMidstOfDevisingNewChallenges, MSGBOX_DEFAULT
-	applywaitmovement LOCALID_TRICK_MASTER, Common_Movement_WalkInPlaceFasterUp
+	applymovement LOCALID_TRICK_MASTER, Common_Movement_WalkInPlaceFasterUp
+	waitmovement 0
 	releaseall
 	end
 
 Route110_TrickHouseEntrance_EventScript_GiveReward::
-	applywaitmovement LOCALID_TRICK_MASTER, Common_Movement_FacePlayer
+	applymovement LOCALID_TRICK_MASTER, Common_Movement_FacePlayer
+	waitmovement 0
 	msgbox Route110_TrickHouseEntrance_Text_YoureHereToAcceptReward, MSGBOX_DEFAULT
 	goto_if_eq VAR_TRICK_HOUSE_LEVEL, 1, Route110_TrickHouseEntrance_EventScript_GivePuzzle1Reward
 	goto_if_eq VAR_TRICK_HOUSE_LEVEL, 2, Route110_TrickHouseEntrance_EventScript_GivePuzzle2Reward
@@ -385,12 +394,14 @@ Route110_TrickHouseEntrance_EventScript_GivePuzzle7Reward::
 Route110_TrickHouseEntrance_EventScript_GotReward::
 	setvar VAR_TRICK_HOUSE_PRIZE_PICKUP, 0
 	setvar VAR_TRICK_HOUSE_ENTRANCE_STATE, 3
-	applywaitmovement LOCALID_TRICK_MASTER, Common_Movement_WalkInPlaceFasterUp
+	applymovement LOCALID_TRICK_MASTER, Common_Movement_WalkInPlaceFasterUp
+	waitmovement 0
 	releaseall
 	end
 
 Route110_TrickHouseEntrance_EventScript_MechadollReward::
-	applywaitmovement LOCALID_TRICK_MASTER, Common_Movement_FacePlayer
+	applymovement LOCALID_TRICK_MASTER, Common_Movement_FacePlayer
+	waitmovement 0
 	msgbox Route110_TrickHouseEntrance_Text_MechadollWhichTent, MSGBOX_DEFAULT
 	call Route110_TrickHouseEntrance_EventScript_ChooseTent
 	goto_if_eq VAR_RESULT, TRUE, Route110_TrickHouseEntrance_EventScript_ReceivedTent
@@ -416,10 +427,13 @@ Route110_TrickHouseEntrance_EventScript_GiveBlueTent::
 Route110_TrickHouseEntrance_EventScript_ReceivedTent::
 	msgbox Route110_TrickHouseEntrance_Text_ThenFarewell, MSGBOX_DEFAULT
 	closemessage
-	applywaitmovement LOCALID_TRICK_MASTER, Route110_TrickHousePuzzle5_Movement_MechadollShake
-	applywaitmovement LOCALID_TRICK_MASTER, Route110_TrickHouse_Movement_TrickMasterSpin
+	applymovement LOCALID_TRICK_MASTER, Route110_TrickHousePuzzle5_Movement_MechadollShake
+	waitmovement 0
+	applymovement LOCALID_TRICK_MASTER, Route110_TrickHouse_Movement_TrickMasterSpin
+	waitmovement 0
 	playse SE_M_EXPLOSION
-	applywaitmovement LOCALID_TRICK_MASTER, Route110_TrickHouse_Movement_TrickMasterJumpAway
+	applymovement LOCALID_TRICK_MASTER, Route110_TrickHouse_Movement_TrickMasterJumpAway
+	waitmovement 0
 	removeobject LOCALID_TRICK_MASTER
 	setvar VAR_TRICK_HOUSE_PRIZE_PICKUP, 0
 	setvar VAR_TRICK_HOUSE_ENTRANCE_STATE, 5
@@ -451,8 +465,10 @@ Route110_TrickHouseEntrance_EventScript_EnterPuzzleRoom::
 	setmetatile 5, 1, METATILE_GenericBuilding_TrickHouse_Stairs_Down, FALSE
 	special DrawWholeMapView
 	delay 20
-	applywaitmovement LOCALID_PLAYER, Common_Movement_WalkUp
-	applywaitmovement LOCALID_PLAYER, Route110_TrickHouseEntrance_Movement_EnterRoom
+	applymovement LOCALID_PLAYER, Common_Movement_WalkUp
+	waitmovement 0
+	applymovement LOCALID_PLAYER, Route110_TrickHouseEntrance_Movement_EnterRoom
+	waitmovement 0
 	switch VAR_TRICK_HOUSE_LEVEL
 	case 0, Route110_TrickHouseEntrance_EventScript_EnterPuzzleRoom1
 	case 1, Route110_TrickHouseEntrance_EventScript_EnterPuzzleRoom2
