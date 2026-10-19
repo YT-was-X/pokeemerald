@@ -13,8 +13,8 @@
 #include "dynamic_placeholder_text_util.h"
 #include "fonts.h"
 
-// Characters drawn per frame at the Fast text speed (vanilla: 1)
-#define FAST_TEXT_CHARS_PER_FRAME 4
+// Text prints instantly at every text speed; this only caps one frame's work
+#define MAX_TEXT_CHARS_PER_FRAME 0x400
 
 static u16 RenderText(struct TextPrinter *);
 static u32 RenderFont(struct TextPrinter *);
@@ -76,12 +76,6 @@ static const u8 sDarkDownArrowTiles[] = INCGFX_U8("graphics/fonts/down_arrow_alt
 static const u8 sUnusedFRLGBlankedDownArrow[] = INCGFX_U8("graphics/fonts/unused_frlg_blanked_down_arrow.png", ".4bpp");
 static const u8 sUnusedFRLGDownArrow[] = INCGFX_U8("graphics/fonts/unused_frlg_down_arrow.png", ".4bpp");
 static const u8 sDownArrowYCoords[] = { 0, 1, 2, 1 };
-static const u8 sWindowVerticalScrollSpeeds[] = {
-    [OPTIONS_TEXT_SPEED_SLOW] = 1,
-    [OPTIONS_TEXT_SPEED_MID] = 2,
-    [OPTIONS_TEXT_SPEED_FAST] = 4,
-};
-
 static const struct GlyphWidthFunc sGlyphWidthFuncs[] =
 {
     { FONT_SMALL,        GetGlyphWidth_Small },
@@ -329,20 +323,18 @@ void RunTextPrinters(void)
         {
             if (sTextPrinters[i].active)
             {
-                // With the Fast text speed, print several characters per frame instead of one
-                int charsThisFrame = 1;
+                // Instant text: draw characters until the printer has to wait
+                // (button prompt, scroll, pause) or finishes, then copy to VRAM once
+                bool32 printed = FALSE;
                 int j;
 
-                if (sTextPrinters[i].textSpeed == 0 && GetPlayerTextSpeed() == OPTIONS_TEXT_SPEED_FAST)
-                    charsThisFrame = FAST_TEXT_CHARS_PER_FRAME;
-
-                for (j = 0; j < charsThisFrame; j++)
+                for (j = 0; j < MAX_TEXT_CHARS_PER_FRAME; j++)
                 {
                     u16 renderCmd = RenderFont(&sTextPrinters[i]);
                     switch (renderCmd)
                     {
                     case RENDER_PRINT:
-                        CopyWindowToVram(sTextPrinters[i].printerTemplate.windowId, COPYWIN_GFX);
+                        printed = TRUE;
                     case RENDER_UPDATE:
                         if (sTextPrinters[i].callback != NULL)
                             sTextPrinters[i].callback(&sTextPrinters[i].printerTemplate, renderCmd);
@@ -352,10 +344,12 @@ void RunTextPrinters(void)
                         break;
                     }
 
-                    // Stop early for button prompts, scrolling, pauses and finished text
                     if (renderCmd != RENDER_PRINT)
                         break;
                 }
+
+                if (printed)
+                    CopyWindowToVram(sTextPrinters[i].printerTemplate.windowId, COPYWIN_GFX);
             }
         }
     }
@@ -1206,18 +1200,9 @@ static u16 RenderText(struct TextPrinter *textPrinter)
     case RENDER_STATE_SCROLL:
         if (textPrinter->scrollDistance)
         {
-            int scrollSpeed = GetPlayerTextSpeed();
-            int speed = sWindowVerticalScrollSpeeds[scrollSpeed];
-            if (textPrinter->scrollDistance < speed)
-            {
-                ScrollWindow(textPrinter->printerTemplate.windowId, 0, textPrinter->scrollDistance, PIXEL_FILL(textPrinter->printerTemplate.bgColor));
-                textPrinter->scrollDistance = 0;
-            }
-            else
-            {
-                ScrollWindow(textPrinter->printerTemplate.windowId, 0, speed, PIXEL_FILL(textPrinter->printerTemplate.bgColor));
-                textPrinter->scrollDistance -= speed;
-            }
+            // Scroll the whole line in one frame instead of by text speed
+            ScrollWindow(textPrinter->printerTemplate.windowId, 0, textPrinter->scrollDistance, PIXEL_FILL(textPrinter->printerTemplate.bgColor));
+            textPrinter->scrollDistance = 0;
             CopyWindowToVram(textPrinter->printerTemplate.windowId, COPYWIN_GFX);
         }
         else
