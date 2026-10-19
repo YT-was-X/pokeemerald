@@ -2203,13 +2203,29 @@ void CreateMon(struct Pokemon *mon, u16 species, u8 level, u8 fixedIV, u8 hasFix
     CalculateMonStats(mon);
 }
 
-// How many personality values to try when generating a Pokémon for the player.
-// With the Shiny Charm in the bag, rerolls until shiny or out of rolls.
+// How many personality values to try when generating a Pokémon for the player;
+// rerolls until shiny or out of rolls.
+// - The Shiny Charm in the bag gives SHINY_CHARM_ROLLS instead of 1.
+// - Each gym badge adds a 1-in-NUM_BADGES chance of one more roll, so all
+//   8 badges always add one (doubling the base odds).
 u32 GetShinyRolls(void)
 {
+    u32 rolls = 1;
+    u32 badges = 0;
+    u32 i;
+
     if (CheckBagHasItem(ITEM_SHINY_CHARM, 1))
-        return SHINY_CHARM_ROLLS;
-    return 1;
+        rolls = SHINY_CHARM_ROLLS;
+
+    for (i = FLAG_BADGE01_GET; i < FLAG_BADGE01_GET + NUM_BADGES; i++)
+    {
+        if (FlagGet(i))
+            badges++;
+    }
+    if (Random() % NUM_BADGES < badges)
+        rolls++;
+
+    return rolls;
 }
 
 bool8 IsShinyForPlayer(u32 personality)
