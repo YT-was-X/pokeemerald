@@ -144,6 +144,7 @@ static void PrintContestStringOnCard(void);
 static void PrintPokemonIconsOnCard(void);
 static void PrintBattleFacilityStringOnCard(void);
 static void PrintStickersOnCard(void);
+static void PrintShinyRollsOnCard(void);
 static void BufferTextsVarsForCardPage2(void);
 static void BufferNameForCardBack(void);
 static void BufferHofDebutTime(void);
@@ -978,6 +979,7 @@ static bool8 PrintAllOnCardBack(void)
         break;
     case 7:
         PrintStickersOnCard();
+        PrintShinyRollsOnCard();
         break;
     default:
         sData->printState = 0;
@@ -1338,6 +1340,52 @@ static void PrintBattleFacilityStringOnCard(void)
     case CARD_TYPE_FRLG:
         break;
     }
+}
+
+static const u8 sText_ShinyRolls[] = _("SHINY ROLLS");
+static const u8 sText_ShinyOddsStart[] = _(" (1/");
+static const u8 sText_ShinyOddsEnd[] = _(")");
+static const u8 sText_DecimalPoint[] = _(".");
+
+// Rows 1-4 of the Emerald card back only show link stats, so use the first
+// empty one; if all are in use, print below the panel
+static u8 GetShinyRollsRow(void)
+{
+    if (!sData->hasLinkResults)
+        return 1;
+    if (!sData->hasTrades)
+        return 2;
+    if (!sData->trainerCard.pokeblocksWithFriends)
+        return 3;
+    if (!sData->trainerCard.contestsWithFriends)
+        return 4;
+    return 6;
+}
+
+// Average shiny rolls (badges add a fractional chance) and the resulting odds,
+// e.g. "20 (1/410)" or "1.4 (1/5958)". Only on the player's own card.
+static void PrintShinyRollsOnCard(void)
+{
+    u8 text[32];
+    u8 *end;
+    u32 rollsTimes8, tenths;
+
+    if (sData->isLink || sData->cardType != CARD_TYPE_EMERALD)
+        return;
+
+    rollsTimes8 = GetAverageShinyRollsTimesBadges();
+    end = ConvertIntToDecimalStringN(text, rollsTimes8 / NUM_BADGES, STR_CONV_MODE_LEFT_ALIGN, 3);
+    tenths = ((rollsTimes8 % NUM_BADGES) * 10 + NUM_BADGES / 2) / NUM_BADGES;
+    if (tenths != 0)
+    {
+        end = StringAppend(end, sText_DecimalPoint);
+        end = ConvertIntToDecimalStringN(end, min(tenths, 9), STR_CONV_MODE_LEFT_ALIGN, 1);
+    }
+    end = StringAppend(end, sText_ShinyOddsStart);
+    end = ConvertIntToDecimalStringN(end, GetShinyOddsDenominator(), STR_CONV_MODE_LEFT_ALIGN, 5);
+    StringAppend(end, sText_ShinyOddsEnd);
+
+    PrintStatOnBackOfCard(GetShinyRollsRow(), sText_ShinyRolls, text, sTrainerCardStatColors);
 }
 
 static void PrintPokemonIconsOnCard(void)

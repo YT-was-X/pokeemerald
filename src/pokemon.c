@@ -2229,30 +2229,31 @@ static const u16 sLegendaryDexNums[] =
     NATIONAL_DEX_DEOXYS,
 };
 
-// How many personality values to try when generating a Pokémon for the player;
-// rerolls until shiny or out of rolls.
-// - The Shiny Charm in the bag gives SHINY_CHARM_ROLLS instead of 1.
-// - Each gym badge adds a 1-in-NUM_BADGES chance of one more roll, so all
-//   8 badges always add one (doubling the base odds).
-// - Each legendary Pokémon registered as caught in the Pokédex adds one roll.
-// - Beating the Elite Four adds SHINY_CHAMPION_ROLLS.
-// - New Game Plus adds the head start kept from the previous run.
-u32 GetShinyRolls(void)
+static u32 CountBadges(void)
 {
-    u32 rolls = 1;
     u32 badges = 0;
     u32 i;
-
-    if (CheckBagHasItem(ITEM_SHINY_CHARM, 1))
-        rolls = SHINY_CHARM_ROLLS;
 
     for (i = FLAG_BADGE01_GET; i < FLAG_BADGE01_GET + NUM_BADGES; i++)
     {
         if (FlagGet(i))
             badges++;
     }
-    if (Random() % NUM_BADGES < badges)
-        rolls++;
+    return badges;
+}
+
+// Shiny rolls that always apply (everything except the badge chance):
+// - 1, or SHINY_CHARM_ROLLS with the Shiny Charm in the bag
+// - one per legendary Pokémon registered as caught in the Pokédex
+// - SHINY_CHAMPION_ROLLS after beating the Elite Four
+// - the New Game Plus head start kept from the previous run
+static u32 GetGuaranteedShinyRolls(void)
+{
+    u32 rolls = 1;
+    u32 i;
+
+    if (CheckBagHasItem(ITEM_SHINY_CHARM, 1))
+        rolls = SHINY_CHARM_ROLLS;
 
     for (i = 0; i < ARRAY_COUNT(sLegendaryDexNums); i++)
     {
@@ -2266,6 +2267,48 @@ u32 GetShinyRolls(void)
     rolls += VarGet(VAR_NGP_SHINY_ROLLS);
 
     return rolls;
+}
+
+// How many personality values to try when generating a Pokémon for the player;
+// rerolls until shiny or out of rolls. On top of the guaranteed rolls, each
+// gym badge adds a 1-in-NUM_BADGES chance of one more roll, so all 8 badges
+// always add one.
+u32 GetShinyRolls(void)
+{
+    u32 rolls = GetGuaranteedShinyRolls();
+
+    if (Random() % NUM_BADGES < CountBadges())
+        rolls++;
+
+    return rolls;
+}
+
+// Average number of shiny rolls, times NUM_BADGES (for the Trainer Card)
+u32 GetAverageShinyRollsTimesBadges(void)
+{
+    return GetGuaranteedShinyRolls() * NUM_BADGES + CountBadges();
+}
+
+// Chance that none of `rolls` personality values is shiny, as a fraction of 1 << 32
+static u64 GetNotShinyChance(u32 rolls)
+{
+    u64 notShiny = (u64)1 << 32;
+
+    while (rolls--)
+        notShiny = (notShiny * (65536 - SHINY_ODDS)) >> 16;
+    return notShiny;
+}
+
+// The current shiny odds as "1 in N" (for the Trainer Card)
+u32 GetShinyOddsDenominator(void)
+{
+    u32 guaranteed = GetGuaranteedShinyRolls();
+    u32 badges = CountBadges();
+    u64 one = (u64)1 << 32;
+    u64 shiny = ((NUM_BADGES - badges) * (one - GetNotShinyChance(guaranteed))
+               + badges * (one - GetNotShinyChance(guaranteed + 1))) / NUM_BADGES;
+
+    return (one + shiny / 2) / shiny;
 }
 
 bool8 IsShinyForPlayer(u32 personality)
