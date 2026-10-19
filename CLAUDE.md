@@ -22,6 +22,7 @@ The user plays on existing saves. Avoid changes to the `SaveBlock1`, `SaveBlock2
 - **Running Shoes from the start:** the `FLAG_SYS_B_DASH` check was removed from the run check in `src/field_player_avatar.c`, so running works on existing saves too. Mom's Running Shoes scene in Littleroot still plays; it's harmless. Maps that disallow running still do.
 - **Running in Poké Centers and Marts:** `allow_running` set to true in the `map.json` of every `*_PokemonCenter_1F/2F`, every `*_Mart` and `EverGrandeCity_PokemonLeague_1F`.
 - **Faster Fast text:** at the Fast setting, `RunTextPrinters` in `src/text.c` draws `FAST_TEXT_CHARS_PER_FRAME` (4) characters per frame instead of 1. Slow and Mid are unchanged.
+- **Instant Nurse Joy healing:** `Common_EventScript_PkmnCenterNurse` in `data/scripts/pkmn_center_nurse.inc` goes straight to healing, skipping the yes/no question (and the Gold Card greeting, which is now unused).
 
 ## Where things live
 - Starting bedroom PC items: `sNewGamePCItems` in `src/player_pc.c` (vanilla: 1 Potion)
