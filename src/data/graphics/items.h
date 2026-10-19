@@ -736,3 +736,6 @@ const u32 gItemIconPalette_MagmaEmblem[] = INCGFX_U32("graphics/items/icon_palet
 
 const u32 gItemIcon_OldSeaMap[] = INCGFX_U32("graphics/items/icons/old_sea_map.png", ".4bpp.lz");
 const u32 gItemIconPalette_OldSeaMap[] = INCGFX_U32("graphics/items/icon_palettes/old_sea_map.pal", ".gbapal.lz");
+
+// Shiny Charm: Star Piece icon recolored gold
+const u32 gItemIconPalette_ShinyCharm[] = INCGFX_U32("graphics/items/icon_palettes/shiny_charm.pal", ".gbapal.lz");
