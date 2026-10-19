@@ -92,6 +92,7 @@
 
 // Shiny odds
 #define SHINY_ODDS 8 // Actual probability is SHINY_ODDS/65536
+#define SHINY_CHARM_ROLLS 3 // Personality rolls with the Shiny Charm in the bag (Gen 6+ behavior)
 
 // Number of bits used to store each contest ribbon (the highest rank achieved)
 #define CONTEST_RIBBON_BITS 3

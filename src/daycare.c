@@ -455,10 +455,14 @@ static s32 GetParentToInheritNature(struct DayCare *daycare)
 static void _TriggerPendingDaycareEgg(struct DayCare *daycare)
 {
     s32 parent;
-    s32 natureTries = 0;
+    s32 natureTries;
+    u32 rolls = GetShinyRolls();
 
     SeedRng2(gMain.vblankCounter2);
     parent = GetParentToInheritNature(daycare);
+
+reroll:
+    natureTries = 0;
 
     // don't inherit nature
     if (parent < 0)
@@ -482,6 +486,10 @@ static void _TriggerPendingDaycareEgg(struct DayCare *daycare)
 
         daycare->offspringPersonality = personality;
     }
+
+    // Shiny Charm: try again if the egg wouldn't be shiny
+    if (--rolls && !IsShinyForPlayer(daycare->offspringPersonality))
+        goto reroll;
 
     FlagSet(FLAG_PENDING_DAYCARE_EGG);
 }

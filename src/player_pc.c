@@ -2,6 +2,7 @@
 #include "constants/songs.h"
 #include "bg.h"
 #include "decoration.h"
+#include "event_data.h"
 #include "event_scripts.h"
 #include "event_object_movement.h"
 #include "field_screen_effect.h"
@@ -370,8 +371,19 @@ void NewGameInitPCItems(void)
     }
 }
 
+// Put the Shiny Charm in the PC the first time it's opened (also on existing saves)
+static void GiveShinyCharmOnce(void)
+{
+    if (FlagGet(FLAG_RECEIVED_SHINY_CHARM))
+        return;
+    if (CheckBagHasItem(ITEM_SHINY_CHARM, 1) || CheckPCHasItem(ITEM_SHINY_CHARM, 1)
+     || AddPCItem(ITEM_SHINY_CHARM, 1))
+        FlagSet(FLAG_RECEIVED_SHINY_CHARM);
+}
+
 void BedroomPC(void)
 {
+    GiveShinyCharmOnce();
     sTopMenuOptionOrder = sBedroomPC_OptionOrder;
     sTopMenuNumOptions = NUM_BEDROOM_PC_OPTIONS;
     DisplayItemMessageOnField(CreateTask(TaskDummy, 0), gText_WhatWouldYouLike, InitPlayerPCMenu);
@@ -379,6 +391,7 @@ void BedroomPC(void)
 
 void PlayerPC(void)
 {
+    GiveShinyCharmOnce();
     sTopMenuOptionOrder = sPlayerPC_OptionOrder;
     sTopMenuNumOptions = NUM_PLAYER_PC_OPTIONS;
     DisplayItemMessageOnField(CreateTask(TaskDummy, 0), gText_WhatWouldYouLike, InitPlayerPCMenu);

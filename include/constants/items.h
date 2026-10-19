@@ -409,6 +409,9 @@ enum {
     ITEM_MAGMA_EMBLEM,
     ITEM_OLD_SEA_MAP,
 
+    // Added
+    ITEM_SHINY_CHARM,
+
     ITEMS_COUNT
 };
 
