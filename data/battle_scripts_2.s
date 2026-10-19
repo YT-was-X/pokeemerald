@@ -71,9 +71,8 @@ BattleScript_PrintCaughtMonInfo::
 	waitstate
 	setbyte gBattleCommunication, 0
 	displaydexinfo
+@ No nickname prompt: trygivecaughtmonnick continues as if the player chose NO
 BattleScript_TryNicknameCaughtMon::
-	printstring STRINGID_GIVENICKNAMECAPTURED
-	waitstate
 	setbyte gBattleCommunication, 0
 	trygivecaughtmonnick BattleScript_GiveCaughtMonEnd
 	givecaughtmon

@@ -10219,6 +10219,11 @@ void BattleDestroyYesNoCursorAt(u8 cursorPosition)
 
 static void Cmd_trygivecaughtmonnick(void)
 {
+    // Skip the nickname question: go straight to the "NO" result, which puts
+    // the Pokémon in the party, or in the PC (with a message) if it's full
+    if (gBattleCommunication[MULTIUSE_STATE] == 0)
+        gBattleCommunication[MULTIUSE_STATE] = 4;
+
     switch (gBattleCommunication[MULTIUSE_STATE])
     {
     case 0:
