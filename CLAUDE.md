@@ -20,6 +20,8 @@ The user plays on existing saves. Avoid changes to the `SaveBlock1`, `SaveBlock2
 ## Changes so far
 - **Post-game Master Balls:** after `FLAG_SYS_GAME_CLEAR`, any normal mart that sells a Poké Ball item also lists the Master Ball first (`AddPostGameMartItems` in `src/shop.c`). The Master Ball price is 50,000 (`src/data/items.h`).
 - **Running Shoes from the start:** the `FLAG_SYS_B_DASH` check was removed from the run check in `src/field_player_avatar.c`, so running works on existing saves too. Mom's Running Shoes scene in Littleroot still plays; it's harmless. Maps that disallow running still do.
+- **Running in Poké Centers and Marts:** `allow_running` set to true in the `map.json` of every `*_PokemonCenter_1F/2F`, every `*_Mart` and `EverGrandeCity_PokemonLeague_1F`.
+- **Faster Fast text:** at the Fast setting, `RunTextPrinters` in `src/text.c` draws `FAST_TEXT_CHARS_PER_FRAME` (4) characters per frame instead of 1. Slow and Mid are unchanged.
 
 ## Where things live
 - Starting bedroom PC items: `sNewGamePCItems` in `src/player_pc.c` (vanilla: 1 Potion)

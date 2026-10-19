@@ -13,6 +13,9 @@
 #include "dynamic_placeholder_text_util.h"
 #include "fonts.h"
 
+// Characters drawn per frame at the Fast text speed (vanilla: 1)
+#define FAST_TEXT_CHARS_PER_FRAME 4
+
 static u16 RenderText(struct TextPrinter *);
 static u32 RenderFont(struct TextPrinter *);
 static u16 FontFunc_Small(struct TextPrinter *);
@@ -326,18 +329,32 @@ void RunTextPrinters(void)
         {
             if (sTextPrinters[i].active)
             {
-                u16 renderCmd = RenderFont(&sTextPrinters[i]);
-                switch (renderCmd)
+                // With the Fast text speed, print several characters per frame instead of one
+                int charsThisFrame = 1;
+                int j;
+
+                if (sTextPrinters[i].textSpeed == 0 && GetPlayerTextSpeed() == OPTIONS_TEXT_SPEED_FAST)
+                    charsThisFrame = FAST_TEXT_CHARS_PER_FRAME;
+
+                for (j = 0; j < charsThisFrame; j++)
                 {
-                case RENDER_PRINT:
-                    CopyWindowToVram(sTextPrinters[i].printerTemplate.windowId, COPYWIN_GFX);
-                case RENDER_UPDATE:
-                    if (sTextPrinters[i].callback != NULL)
-                        sTextPrinters[i].callback(&sTextPrinters[i].printerTemplate, renderCmd);
-                    break;
-                case RENDER_FINISH:
-                    sTextPrinters[i].active = FALSE;
-                    break;
+                    u16 renderCmd = RenderFont(&sTextPrinters[i]);
+                    switch (renderCmd)
+                    {
+                    case RENDER_PRINT:
+                        CopyWindowToVram(sTextPrinters[i].printerTemplate.windowId, COPYWIN_GFX);
+                    case RENDER_UPDATE:
+                        if (sTextPrinters[i].callback != NULL)
+                            sTextPrinters[i].callback(&sTextPrinters[i].printerTemplate, renderCmd);
+                        break;
+                    case RENDER_FINISH:
+                        sTextPrinters[i].active = FALSE;
+                        break;
+                    }
+
+                    // Stop early for button prompts, scrolling, pauses and finished text
+                    if (renderCmd != RENDER_PRINT)
+                        break;
                 }
             }
         }
