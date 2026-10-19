@@ -45,6 +45,10 @@
 #include "mystery_gift.h"
 #include "union_room_chat.h"
 #include "constants/items.h"
+#include "constants/region_map_sections.h"
+#include "constants/species.h"
+#include "data.h"
+#include "string_util.h"
 
 extern const u8 EventScript_ResetAllMapFlags[];
 
@@ -204,6 +208,190 @@ void NewGameInitData(void)
     WipeTrainerNameRecords();
     ResetTrainerHillResults();
     ResetContestLinkResults();
+}
+
+// ---------------------------------------------------------------------------
+// New Game Plus: started from the bed in the player's room after the Elite Four.
+// Everything is reset as for a new game except the player's name, gender,
+// Trainer ID and options, plus:
+// - the original starter, back to its first stage at level 5 with fresh moves
+// - all money and Master Balls
+// - a head start of 1/NGP_SHINY_ROLL_DIVISOR of the current shiny rolls
+// ---------------------------------------------------------------------------
+
+// Each Hoenn starter species and the first stage of its line
+static const u16 sStarterLines[][2] =
+{
+    {SPECIES_TREECKO,   SPECIES_TREECKO},
+    {SPECIES_GROVYLE,   SPECIES_TREECKO},
+    {SPECIES_SCEPTILE,  SPECIES_TREECKO},
+    {SPECIES_TORCHIC,   SPECIES_TORCHIC},
+    {SPECIES_COMBUSKEN, SPECIES_TORCHIC},
+    {SPECIES_BLAZIKEN,  SPECIES_TORCHIC},
+    {SPECIES_MUDKIP,    SPECIES_MUDKIP},
+    {SPECIES_MARSHTOMP, SPECIES_MUDKIP},
+    {SPECIES_SWAMPERT,  SPECIES_MUDKIP},
+};
+
+static u16 GetStarterBaseSpecies(u16 species)
+{
+    u32 i;
+
+    for (i = 0; i < ARRAY_COUNT(sStarterLines); i++)
+    {
+        if (sStarterLines[i][0] == species)
+            return sStarterLines[i][1];
+    }
+    return SPECIES_NONE;
+}
+
+static u32 GetPlayerOtId(void)
+{
+    return gSaveBlock2Ptr->playerTrainerId[0]
+         | (gSaveBlock2Ptr->playerTrainerId[1] << 8)
+         | (gSaveBlock2Ptr->playerTrainerId[2] << 16)
+         | (gSaveBlock2Ptr->playerTrainerId[3] << 24);
+}
+
+// The starter Prof. Birch gave the player: one of the Hoenn starter lines,
+// caught by the player on Route 101 at level 5
+static bool8 IsOriginalStarter(struct BoxPokemon *boxMon)
+{
+    u16 species = GetBoxMonData(boxMon, MON_DATA_SPECIES);
+
+    return species != SPECIES_NONE
+        && !GetBoxMonData(boxMon, MON_DATA_IS_EGG)
+        && GetStarterBaseSpecies(species) != SPECIES_NONE
+        && GetBoxMonData(boxMon, MON_DATA_OT_ID) == GetPlayerOtId()
+        && GetBoxMonData(boxMon, MON_DATA_MET_LOCATION) == MAPSEC_ROUTE_101
+        && GetBoxMonData(boxMon, MON_DATA_MET_LEVEL) == 5;
+}
+
+static struct BoxPokemon *FindOriginalStarter(void)
+{
+    u32 i, j;
+
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        if (IsOriginalStarter(&gPlayerParty[i].box))
+            return &gPlayerParty[i].box;
+    }
+    for (i = 0; i < TOTAL_BOXES_COUNT; i++)
+    {
+        for (j = 0; j < IN_BOX_COUNT; j++)
+        {
+            if (IsOriginalStarter(&gPokemonStoragePtr->boxes[i][j]))
+                return &gPokemonStoragePtr->boxes[i][j];
+        }
+    }
+    return NULL;
+}
+
+// Rebuild the starter as a level 5 first stage with its level 5 moves,
+// keeping its personality (nature, gender, shininess), IVs, ability,
+// nickname and original trainer
+static void MakeLevel5Starter(struct Pokemon *dest, struct BoxPokemon *src)
+{
+    u8 nickname[POKEMON_NAME_LENGTH + 1];
+    u8 otName[PLAYER_NAME_LENGTH + 1];
+    u16 species = GetBoxMonData(src, MON_DATA_SPECIES);
+    u32 data;
+    u32 i;
+
+    CreateMon(dest, GetStarterBaseSpecies(species), 5, 0, TRUE,
+              GetBoxMonData(src, MON_DATA_PERSONALITY), OT_ID_PRESET, GetBoxMonData(src, MON_DATA_OT_ID));
+
+    for (i = MON_DATA_HP_IV; i <= MON_DATA_SPDEF_IV; i++)
+    {
+        data = GetBoxMonData(src, i);
+        SetMonData(dest, i, &data);
+    }
+    data = GetBoxMonData(src, MON_DATA_ABILITY_NUM);
+    SetMonData(dest, MON_DATA_ABILITY_NUM, &data);
+    data = GetBoxMonData(src, MON_DATA_LANGUAGE);
+    SetMonData(dest, MON_DATA_LANGUAGE, &data);
+    data = GetBoxMonData(src, MON_DATA_OT_GENDER);
+    SetMonData(dest, MON_DATA_OT_GENDER, &data);
+    GetBoxMonData(src, MON_DATA_OT_NAME, otName);
+    SetMonData(dest, MON_DATA_OT_NAME, otName);
+
+    // Only keep a real nickname, not the old species name
+    GetBoxMonData(src, MON_DATA_NICKNAME, nickname);
+    if (StringCompare(nickname, gSpeciesNames[species]) != 0)
+        SetMonData(dest, MON_DATA_NICKNAME, nickname);
+
+    data = MAPSEC_ROUTE_101;
+    SetMonData(dest, MON_DATA_MET_LOCATION, &data);
+    data = 5;
+    SetMonData(dest, MON_DATA_MET_LEVEL, &data);
+    data = ITEM_POKE_BALL;
+    SetMonData(dest, MON_DATA_POKEBALL, &data);
+
+    CalculateMonStats(dest);
+}
+
+static u16 CountMasterBalls(void)
+{
+    u32 count = CountTotalItemQuantityInBag(ITEM_MASTER_BALL);
+    u32 i;
+
+    for (i = 0; i < PC_ITEMS_COUNT; i++)
+    {
+        if (gSaveBlock1Ptr->pcItems[i].itemId == ITEM_MASTER_BALL)
+            count += gSaveBlock1Ptr->pcItems[i].quantity;
+    }
+    return min(count, USHRT_MAX);
+}
+
+static u16 GetNewGamePlusShinyRolls(void)
+{
+    // Called as Champion, so all 8 badges make GetShinyRolls deterministic
+    u32 rolls = GetShinyRolls();
+
+    // Count the Shiny Charm even if it's stored in the PC
+    if (!CheckBagHasItem(ITEM_SHINY_CHARM, 1) && CheckPCHasItem(ITEM_SHINY_CHARM, 1))
+        rolls += SHINY_CHARM_ROLLS - 1;
+
+    return rolls / NGP_SHINY_ROLL_DIVISOR;
+}
+
+void NewGamePlusInitData(void)
+{
+    struct Pokemon starter;
+    struct BoxPokemon *oldStarter = FindOriginalStarter();
+    bool8 hasStarter = (oldStarter != NULL);
+    u8 trainerId[TRAINER_ID_LENGTH];
+    u32 money = GetMoney(&gSaveBlock1Ptr->money);
+    u16 masterBalls = CountMasterBalls();
+    u16 shinyRolls = GetNewGamePlusShinyRolls();
+    u16 dexNum;
+
+    if (hasStarter)
+        MakeLevel5Starter(&starter, oldStarter);
+    memcpy(trainerId, gSaveBlock2Ptr->playerTrainerId, TRAINER_ID_LENGTH);
+
+    NewGameInitData();
+
+    memcpy(gSaveBlock2Ptr->playerTrainerId, trainerId, TRAINER_ID_LENGTH);
+    SetMoney(&gSaveBlock1Ptr->money, money);
+    if (masterBalls != 0 && !AddBagItem(ITEM_MASTER_BALL, masterBalls))
+        AddPCItem(ITEM_MASTER_BALL, masterBalls);
+    VarSet(VAR_NGP_SHINY_ROLLS, shinyRolls);
+
+    if (hasStarter)
+    {
+        gPlayerParty[0] = starter;
+        CalculatePlayerPartyCount();
+        dexNum = SpeciesToNationalPokedexNum(GetMonData(&starter, MON_DATA_SPECIES));
+        GetSetPokedexFlag(dexNum, FLAG_SET_SEEN);
+        GetSetPokedexFlag(dexNum, FLAG_SET_CAUGHT);
+    }
+}
+
+// Special, called from the bed script after the screen fades out
+void StartNewGamePlus(void)
+{
+    SetMainCallback2(CB2_NewGamePlus);
 }
 
 static void ResetMiniGamesRecords(void)

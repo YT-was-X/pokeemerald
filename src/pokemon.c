@@ -2236,6 +2236,7 @@ static const u16 sLegendaryDexNums[] =
 //   8 badges always add one (doubling the base odds).
 // - Each legendary Pokémon registered as caught in the Pokédex adds one roll.
 // - Beating the Elite Four adds SHINY_CHAMPION_ROLLS.
+// - New Game Plus adds the head start kept from the previous run.
 u32 GetShinyRolls(void)
 {
     u32 rolls = 1;
@@ -2261,6 +2262,8 @@ u32 GetShinyRolls(void)
 
     if (FlagGet(FLAG_SYS_GAME_CLEAR))
         rolls += SHINY_CHAMPION_ROLLS;
+
+    rolls += VarGet(VAR_NGP_SHINY_ROLLS);
 
     return rolls;
 }

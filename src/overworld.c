@@ -1529,12 +1529,12 @@ static bool8 RunFieldCallback(void)
     return TRUE;
 }
 
-void CB2_NewGame(void)
+static void StartNewGameWith(void (*initData)(void))
 {
     FieldClearVBlankHBlankCallbacks();
     StopMapMusic();
     ResetSafariZoneFlag_();
-    NewGameInitData();
+    initData();
     ResetInitialPlayerAvatarState();
     PlayTimeCounter_Start();
     ScriptContext_Init();
@@ -1545,6 +1545,16 @@ void CB2_NewGame(void)
     SetFieldVBlankCallback();
     SetMainCallback1(CB1_Overworld);
     SetMainCallback2(CB2_Overworld);
+}
+
+void CB2_NewGame(void)
+{
+    StartNewGameWith(NewGameInitData);
+}
+
+void CB2_NewGamePlus(void)
+{
+    StartNewGameWith(NewGamePlusInitData);
 }
 
 void CB2_WhiteOut(void)
