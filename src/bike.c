@@ -1053,9 +1053,11 @@ void Bike_HandleBumpySlopeJump(void)
     }
 }
 
+// Running is allowed on every map (the map header's allowRunning is ignored);
+// only special tiles like deep sand still prevent it
 bool32 IsRunningDisallowed(u8 metatile)
 {
-    if (!gMapHeader.allowRunning || IsRunningDisallowedByMetatile(metatile) == TRUE)
+    if (IsRunningDisallowedByMetatile(metatile) == TRUE)
         return TRUE;
     else
         return FALSE;
