@@ -6,6 +6,7 @@ RustboroCity_Gym_EventScript_Roxanne::
 	specialvar VAR_RESULT, ShouldTryRematchBattle
 	goto_if_eq VAR_RESULT, TRUE, RustboroCity_Gym_EventScript_RoxanneRematch
 	goto_if_unset FLAG_RECEIVED_TM_ROCK_TOMB, RustboroCity_Gym_EventScript_GiveRockTomb
+	goto_if_unset FLAG_RECEIVED_VS_SEEKER, RustboroCity_Gym_EventScript_GiveVsSeeker
 	msgbox RustboroCity_Gym_Text_RoxannePostBattle, MSGBOX_DEFAULT
 	release
 	end
@@ -30,6 +31,16 @@ RustboroCity_Gym_EventScript_GiveRockTomb::
 	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
 	setflag FLAG_RECEIVED_TM_ROCK_TOMB
 	msgbox RustboroCity_Gym_Text_ExplainRockTomb, MSGBOX_DEFAULT
+	goto RustboroCity_Gym_EventScript_GiveVsSeeker
+	end
+
+@ Roxanne also gives the VS Seeker (also when talked to again on older saves)
+RustboroCity_Gym_EventScript_GiveVsSeeker::
+	msgbox RustboroCity_Gym_Text_TakeVsSeeker, MSGBOX_DEFAULT
+	giveitem ITEM_VS_SEEKER
+	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
+	setflag FLAG_RECEIVED_VS_SEEKER
+	msgbox RustboroCity_Gym_Text_ExplainVsSeeker, MSGBOX_DEFAULT
 	release
 	end
 
@@ -281,3 +292,16 @@ RustboroCity_Gym_Text_RoxanneRematchNeedTwoMons:
 	.string "You only have one POKéMON with you?\p"
 	.string "Please return with at least one more\n"
 	.string "POKéMON.$"
+
+RustboroCity_Gym_Text_TakeVsSeeker:
+	.string "ROXANNE: Please take this as well.\n"
+	.string "It's a device called a VS SEEKER.$"
+
+RustboroCity_Gym_Text_ExplainVsSeeker:
+	.string "Use the VS SEEKER and every TRAINER\n"
+	.string "you've beaten nearby will want\l"
+	.string "to battle you again.\p"
+	.string "It needs 100 steps to recharge\n"
+	.string "between uses.\p"
+	.string "Rematches are a wonderful way to\n"
+	.string "keep learning!$"

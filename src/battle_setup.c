@@ -47,6 +47,7 @@
 #include "constants/trainers.h"
 #include "constants/trainer_hill.h"
 #include "constants/weather.h"
+#include "constants/trainer_types.h"
 
 enum {
     TRANSITION_TYPE_NORMAL,
@@ -1790,6 +1791,101 @@ static bool32 HasAtLeastFiveBadges(void)
 }
 
 #define STEP_COUNTER_MAX 255
+
+// ---------------------------------------------------------------------------
+// VS Seeker: every beaten trainer on screen wants to battle again.
+// - Match Call trainers (the rematch table) become ready for their next,
+//   stronger team, as when they call for a rematch; talk to them to battle.
+// - Other trainers whose script is a plain single/double battle (no
+//   post-battle script, so nothing story-related) get their defeat flag
+//   cleared and challenge the player again with their original team.
+// Gym leaders, the Elite Four and story trainers are left alone.
+// ---------------------------------------------------------------------------
+
+#define VS_SEEKER_RANGE_X 7 // tiles visible either side of the player
+#define VS_SEEKER_RANGE_Y 5
+#define SCRIPT_OP_TRAINERBATTLE 0x5C // see data/script_cmd_table.inc
+
+static bool8 TryReadyTrainerForVsSeeker(u8 objectEventId)
+{
+    struct ObjectEvent *trainer = &gObjectEvents[objectEventId];
+    struct ObjectEvent *player = &gObjectEvents[gPlayerAvatar.objectEventId];
+    const u8 *script;
+    u16 trainerId;
+    s32 tableId;
+
+    if (!trainer->active || trainer->invisible || trainer->isPlayer || trainer->trainerType == TRAINER_TYPE_NONE)
+        return FALSE;
+    if (abs(trainer->currentCoords.x - player->currentCoords.x) > VS_SEEKER_RANGE_X
+     || abs(trainer->currentCoords.y - player->currentCoords.y) > VS_SEEKER_RANGE_Y)
+        return FALSE;
+
+    script = GetObjectEventScriptPointerByObjectEventId(objectEventId);
+    if (script == NULL || script[0] != SCRIPT_OP_TRAINERBATTLE)
+        return FALSE;
+    trainerId = T1_READ_16(script + 2);
+    if (!FlagGet(TRAINER_FLAGS_START + trainerId)) // not beaten yet
+        return FALSE;
+
+    tableId = TrainerIdToRematchTableId(gRematchTable, trainerId);
+    if (tableId != -1)
+    {
+        if (tableId > REMATCH_SPECIAL_TRAINER_START || IsRematchForbidden(tableId))
+            return FALSE;
+        if (gSaveBlock1Ptr->trainerRematches[tableId] == 0)
+            SetRematchIdForTrainer(gRematchTable, tableId);
+        return TRUE;
+    }
+
+    if (script[1] != TRAINER_BATTLE_SINGLE && script[1] != TRAINER_BATTLE_DOUBLE)
+        return FALSE;
+    FlagClear(TRAINER_FLAGS_START + trainerId);
+    return TRUE;
+}
+
+// Special for EventScript_UseVsSeeker; sets VAR_RESULT to a VS_SEEKER_* result
+void UseVsSeeker(void)
+{
+    u16 stepsLeft = VarGet(VAR_VS_SEEKER_STEPS);
+    u32 numReady = 0;
+    u32 i;
+
+    if (stepsLeft != 0)
+    {
+        ConvertIntToDecimalStringN(gStringVar1, stepsLeft, STR_CONV_MODE_LEFT_ALIGN, 3);
+        gSpecialVar_Result = VS_SEEKER_NOT_CHARGED;
+        return;
+    }
+
+    if (CurrentBattlePyramidLocation() == PYRAMID_LOCATION_NONE && !InTrainerHill())
+    {
+        for (i = 0; i < OBJECT_EVENTS_COUNT; i++)
+        {
+            if (TryReadyTrainerForVsSeeker(i))
+            {
+                ObjectEventClearHeldMovementIfActive(&gObjectEvents[i]);
+                ObjectEventSetHeldMovement(&gObjectEvents[i], MOVEMENT_ACTION_EMOTE_EXCLAMATION_MARK);
+                numReady++;
+            }
+        }
+    }
+
+    if (numReady == 0)
+    {
+        gSpecialVar_Result = VS_SEEKER_NO_TRAINERS;
+        return;
+    }
+    VarSet(VAR_VS_SEEKER_STEPS, VS_SEEKER_RECHARGE_STEPS);
+    gSpecialVar_Result = VS_SEEKER_SUCCESS;
+}
+
+void UpdateVsSeekerStepCounter(void)
+{
+    u16 stepsLeft = VarGet(VAR_VS_SEEKER_STEPS);
+
+    if (stepsLeft != 0)
+        VarSet(VAR_VS_SEEKER_STEPS, stepsLeft - 1);
+}
 
 void IncrementRematchStepCounter(void)
 {

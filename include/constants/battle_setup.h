@@ -15,4 +15,10 @@
 #define TRAINER_BATTLE_SET_TRAINER_B                    11
 #define TRAINER_BATTLE_HILL                             12
 
+// VS Seeker (UseVsSeeker special)
+#define VS_SEEKER_RECHARGE_STEPS 100
+#define VS_SEEKER_NOT_CHARGED    0
+#define VS_SEEKER_NO_TRAINERS    1
+#define VS_SEEKER_SUCCESS        2
+
 #endif // GUARD_CONSTANTS_BATTLE_SETUP_H

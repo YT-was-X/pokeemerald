@@ -541,3 +541,4 @@ gSpecials::
 	def_special CloseDeptStoreElevatorWindow
 	def_special TrySetBattleTowerLinkType
 	def_special StartNewGamePlus
+	def_special UseVsSeeker

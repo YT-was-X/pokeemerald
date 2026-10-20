@@ -55,6 +55,8 @@ const u8 *GetTrainerBLoseText(void);
 const u8 *GetTrainerWonSpeech(void);
 void UpdateRematchIfDefeated(s32 rematchTableId);
 void IncrementRematchStepCounter(void);
+void UseVsSeeker(void);
+void UpdateVsSeekerStepCounter(void);
 void TryUpdateRandomTrainerRematches(u16 mapGroup, u16 mapNum);
 bool32 DoesSomeoneWantRematchIn(u16 mapGroup, u16 mapNum);
 bool32 IsRematchTrainerIn(u16 mapGroup, u16 mapNum);
