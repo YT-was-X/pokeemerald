@@ -542,3 +542,7 @@ gSpecials::
 	def_special TrySetBattleTowerLinkType
 	def_special StartNewGamePlus
 	def_special UseVsSeeker
+	def_special CountUnlockedGiftMons
+	def_special ShowGiftMonTerminalMenu
+	def_special BufferGiftMonInfo
+	def_special TryBuyGiftMon

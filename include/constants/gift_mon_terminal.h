@@ -1,0 +1,10 @@
+#ifndef GUARD_CONSTANTS_GIFT_MON_TERMINAL_H
+#define GUARD_CONSTANTS_GIFT_MON_TERMINAL_H
+
+// Results of the TryBuyGiftMon special
+#define GIFT_MON_BOUGHT_PARTY 0
+#define GIFT_MON_BOUGHT_PC    1
+#define GIFT_MON_NO_MONEY     2
+#define GIFT_MON_NO_ROOM      3
+
+#endif // GUARD_CONSTANTS_GIFT_MON_TERMINAL_H

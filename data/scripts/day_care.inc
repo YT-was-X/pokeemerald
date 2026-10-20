@@ -184,7 +184,8 @@ Route117_PokemonDayCare_EventScript_CheckEnoughMoney::
 	end
 
 Route117_PokemonDayCare_EventScript_RetrieveMon::
-	applywaitmovement LOCALID_DAYCARE_LADY, Route117_PokemonDayCare_Movement_RetrieveDaycareMon
+	@ The Poké Center 2F counter sets VAR_TEMP_F; there's no Day Care lady to walk there
+	call_if_ne VAR_TEMP_F, DAYCARE_COUNTER_REMOTE, Route117_PokemonDayCare_EventScript_LadyFetchMon
 	specialvar VAR_RESULT, TakePokemonFromDaycare
 	special SubtractMoneyFromVar0x8005
 	playse SE_SHOP
@@ -197,6 +198,10 @@ Route117_PokemonDayCare_EventScript_RetrieveMon::
 	goto_if_eq VAR_RESULT, DAYCARE_ONE_MON, Route117_PokemonDayCare_EventScript_AskRetrieveOtherMon
 	goto Route117_PokemonDayCare_EventScript_ComeAgain
 	end
+
+Route117_PokemonDayCare_EventScript_LadyFetchMon::
+	applywaitmovement LOCALID_DAYCARE_LADY, Route117_PokemonDayCare_Movement_RetrieveDaycareMon
+	return
 
 Route117_PokemonDayCare_EventScript_AskRetrieveOtherMon::
 	msgbox Route117_PokemonDayCare_Text_TakeOtherOneBackToo, MSGBOX_YESNO

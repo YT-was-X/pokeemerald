@@ -13,6 +13,9 @@
 #define DAYCARE_ONE_MON     2
 #define DAYCARE_TWO_MONS    3
 
+// VAR_TEMP_F value set by the Poké Center 2F Day Care counter (no lady to walk there)
+#define DAYCARE_COUNTER_REMOTE 1
+
 #define INHERITED_IV_COUNT 3
 #define EGG_HATCH_LEVEL 5
 #define EGG_GENDER_MALE 0x8000  // used to create a male egg from a female-only parent species (e.g. Nidoran)
