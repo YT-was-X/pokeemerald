@@ -46,8 +46,8 @@
 #define FLAG_RECEIVED_SHINY_CHARM 0x20 // Shiny Charm was put in the player's PC (was unused)
 #define FLAG_RECEIVED_EVENT_TICKETS 0x21 // Event tickets were put in the player's PC (was unused)
 #define FLAG_RECEIVED_VS_SEEKER 0x22 // Got the VS Seeker from Roxanne (was unused)
-#define FLAG_UNUSED_0x023    0x23 // Unused Flag
-#define FLAG_UNUSED_0x024    0x24 // Unused Flag
+#define FLAG_EXP_SHARE_ON    0x23 // The EXP. SHARE key item is switched on (was unused)
+#define FLAG_RECEIVED_EXP_SHARE_KEY 0x24 // Got the EXP. SHARE key item from Mr. Stone (was unused)
 #define FLAG_UNUSED_0x025    0x25 // Unused Flag
 #define FLAG_UNUSED_0x026    0x26 // Unused Flag
 #define FLAG_UNUSED_0x027    0x27 // Unused Flag

@@ -4549,4 +4549,17 @@ const struct Item gItems[] =
         .type = ITEM_USE_BAG_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
     },
+
+    [ITEM_EXP_SHARE_KEY] =
+    {
+        .name = _("EXP. SHARE"),
+        .itemId = ITEM_EXP_SHARE_KEY,
+        .price = 0,
+        .description = sExpShareKeyDesc,
+        .importance = 1,
+        .registrability = TRUE,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_ExpShareKey,
+    },
 };

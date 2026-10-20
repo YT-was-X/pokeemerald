@@ -654,6 +654,29 @@ static void Task_OpenRegisteredPokeblockCase(u8 taskId)
     }
 }
 
+static const u8 sText_ExpShareOn[] = _("The EXP. SHARE was turned on.\pYour whole party will now get EXP.\nfrom battles.");
+static const u8 sText_ExpShareOff[] = _("The EXP. SHARE was turned off.");
+
+void ItemUseOutOfBattle_ExpShareKey(u8 taskId)
+{
+    if (FlagGet(FLAG_EXP_SHARE_ON))
+    {
+        FlagClear(FLAG_EXP_SHARE_ON);
+        StringExpandPlaceholders(gStringVar4, sText_ExpShareOff);
+    }
+    else
+    {
+        FlagSet(FLAG_EXP_SHARE_ON);
+        StringExpandPlaceholders(gStringVar4, sText_ExpShareOn);
+    }
+    PlaySE(SE_SELECT);
+
+    if (!gTasks[taskId].tUsingRegisteredKeyItem)
+        DisplayItemMessage(taskId, FONT_NORMAL, gStringVar4, CloseItemMessage);
+    else
+        DisplayItemMessageOnField(taskId, gStringVar4, Task_CloseCantUseKeyItemMessage);
+}
+
 void ItemUseOutOfBattle_CoinCase(u8 taskId)
 {
     ConvertIntToDecimalStringN(gStringVar1, GetCoins(), STR_CONV_MODE_LEFT_ALIGN, 4);

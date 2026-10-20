@@ -1554,3 +1554,8 @@ static const u8 sShinyCharmDesc[] = _(
     "A shiny charm that\n"
     "raises the chance of\n"
     "finding shiny POKéMON.");
+
+static const u8 sExpShareKeyDesc[] = _(
+    "Turn it on to share\n"
+    "battle EXP. with your\n"
+    "whole party.");

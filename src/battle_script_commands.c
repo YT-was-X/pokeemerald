@@ -3252,6 +3252,24 @@ static void Cmd_jumpiftype(void)
         gBattlescriptCurrInstr += 7;
 }
 
+// EXP. SHARE key item: while it's on, party members that didn't battle (and
+// aren't fainted, eggs, or the in-game partner's Pokémon) each get half of the
+// defeated Pokémon's EXP. Pokémon that battled get their normal share, and the
+// held EXP. SHARE is ignored.
+static bool32 IsExpShareKeyOn(void)
+{
+    return FlagGet(FLAG_EXP_SHARE_ON) && CheckBagHasItem(ITEM_EXP_SHARE_KEY, 1);
+}
+
+static bool32 CanGetExpShareKeyExp(u32 monId)
+{
+    if (GetMonData(&gPlayerParty[monId], MON_DATA_IS_EGG))
+        return FALSE;
+    if ((gBattleTypeFlags & BATTLE_TYPE_INGAME_PARTNER) && monId >= MULTI_PARTY_SIZE)
+        return FALSE;
+    return TRUE;
+}
+
 static void Cmd_getexp(void)
 {
     u16 item;
@@ -3309,7 +3327,17 @@ static void Cmd_getexp(void)
 
             calculatedExp = gSpeciesInfo[gBattleMons[gBattlerFainted].species].expYield * gBattleMons[gBattlerFainted].level / 7;
 
-            if (viaExpShare) // at least one mon is getting exp via exp share
+            if (IsExpShareKeyOn())
+            {
+                *exp = SAFE_DIV(calculatedExp, viaSentIn);
+                if (*exp == 0)
+                    *exp = 1;
+
+                gExpShareExp = calculatedExp / 2;
+                if (gExpShareExp == 0)
+                    gExpShareExp = 1;
+            }
+            else if (viaExpShare) // at least one mon is getting exp via exp share
             {
                 *exp = SAFE_DIV(calculatedExp / 2, viaSentIn);
                 if (*exp == 0)
@@ -3342,7 +3370,14 @@ static void Cmd_getexp(void)
             else
                 holdEffect = GetItemHoldEffect(item);
 
-            if (holdEffect != HOLD_EFFECT_EXP_SHARE && !(gBattleStruct->sentInPokes & 1))
+            if (IsExpShareKeyOn())
+            {
+                // Only the key item's rules apply, not the held item's
+                holdEffect = (holdEffect == HOLD_EFFECT_EXP_SHARE) ? HOLD_EFFECT_NONE : holdEffect;
+            }
+
+            if (holdEffect != HOLD_EFFECT_EXP_SHARE && !(gBattleStruct->sentInPokes & 1)
+             && !(IsExpShareKeyOn() && CanGetExpShareKeyExp(gBattleStruct->expGetterMonId)))
             {
                 *(&gBattleStruct->sentInPokes) >>= 1;
                 gBattleScripting.getexpState = 5;
@@ -3373,6 +3408,8 @@ static void Cmd_getexp(void)
 
                     if (holdEffect == HOLD_EFFECT_EXP_SHARE)
                         gBattleMoveDamage += gExpShareExp;
+                    else if (!(gBattleStruct->sentInPokes & 1) && IsExpShareKeyOn())
+                        gBattleMoveDamage = gExpShareExp;
                     if (holdEffect == HOLD_EFFECT_LUCKY_EGG)
                         gBattleMoveDamage = (gBattleMoveDamage * 150) / 100;
                     if (gBattleTypeFlags & BATTLE_TYPE_TRAINER)

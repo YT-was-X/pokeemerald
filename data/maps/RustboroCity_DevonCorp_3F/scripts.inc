@@ -157,16 +157,18 @@ RustboroCity_DevonCorp_3F_EventScript_MrStone::
 
 RustboroCity_DevonCorp_3F_EventScript_GiveExpShare::
 	msgbox RustboroCity_DevonCorp_3F_Text_ThankYouForDeliveringLetter, MSGBOX_DEFAULT
-	giveitem ITEM_EXP_SHARE
+	giveitem ITEM_EXP_SHARE_KEY
 	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
 	setflag FLAG_RECEIVED_EXP_SHARE
-	msgbox RustboroCity_DevonCorp_3F_Text_ExplainExpShare, MSGBOX_DEFAULT
+	setflag FLAG_RECEIVED_EXP_SHARE_KEY
+	msgbox RustboroCity_DevonCorp_3F_Text_ExplainExpShareKey, MSGBOX_DEFAULT
 	closemessage
 	applywaitmovement VAR_LAST_TALKED, Common_Movement_FaceOriginalDirection
 	release
 	end
 
 RustboroCity_DevonCorp_3F_EventScript_MrStoneAfterFavor::
+	goto_if_unset FLAG_RECEIVED_EXP_SHARE_KEY, RustboroCity_DevonCorp_3F_EventScript_GiveExpShareKey
 	msgbox RustboroCity_DevonCorp_3F_Text_NotFamiliarWithTrends, MSGBOX_DEFAULT
 	closemessage
 	applywaitmovement VAR_LAST_TALKED, Common_Movement_FaceOriginalDirection
@@ -299,3 +301,26 @@ RustboroCity_DevonCorp_3F_Text_RareRocksDisplay:
 	.string "It's a collection of rare rocks and\n"
 	.string "stones assembled by the PRESIDENT.$"
 
+@ Older saves got the held EXP. SHARE; Mr. Stone now also gives the key item
+RustboroCity_DevonCorp_3F_EventScript_GiveExpShareKey::
+	msgbox RustboroCity_DevonCorp_3F_Text_TakeNewExpShare, MSGBOX_DEFAULT
+	giveitem ITEM_EXP_SHARE_KEY
+	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
+	setflag FLAG_RECEIVED_EXP_SHARE_KEY
+	msgbox RustboroCity_DevonCorp_3F_Text_ExplainExpShareKey, MSGBOX_DEFAULT
+	closemessage
+	applywaitmovement VAR_LAST_TALKED, Common_Movement_FaceOriginalDirection
+	release
+	end
+
+RustboroCity_DevonCorp_3F_Text_TakeNewExpShare:
+	.string "MR. STONE: Ah, {PLAYER}! DEVON has\n"
+	.string "improved the EXP. SHARE.\p"
+	.string "Please, take this new model!$"
+
+RustboroCity_DevonCorp_3F_Text_ExplainExpShareKey:
+	.string "MR. STONE: Use the EXP. SHARE from\n"
+	.string "your BAG to turn it on or off.\p"
+	.string "While it's on, all the POKéMON in\n"
+	.string "your party get EXP. from battles,\l"
+	.string "even ones that didn't take part.$"
