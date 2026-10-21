@@ -532,6 +532,22 @@ static void RemoveIVIndexFromList(u8 *ivs, u8 selectedIv)
     }
 }
 
+// Each full EV_IV_BONUS_TIER EVs a parent has in an inherited stat (up to 3 tiers at 252+)
+// add a random 1 to <tiers> to the egg's IV in that stat, capped at 31
+#define EV_IV_BONUS_TIER     84
+#define EV_IV_BONUS_MAX_TIER 3
+
+static u8 GetEvTrainingIVBonus(u8 ev)
+{
+    u8 tiers = ev / EV_IV_BONUS_TIER;
+
+    if (tiers > EV_IV_BONUS_MAX_TIER)
+        tiers = EV_IV_BONUS_MAX_TIER;
+    if (tiers == 0)
+        return 0;
+    return 1 + Random() % tiers;
+}
+
 static void InheritIVs(struct Pokemon *egg, struct DayCare *daycare)
 {
     u8 i;
@@ -566,36 +582,17 @@ static void InheritIVs(struct Pokemon *egg, struct DayCare *daycare)
         whichParents[i] = Random() % DAYCARE_MON_COUNT;
     }
 
-    // Set each of inherited IVs on the egg mon.
+    // Set each of inherited IVs on the egg mon, boosted by the parent's EVs in that stat.
+    // The IV and EV fields are both in HP, ATK, DEF, SPEED, SPATK, SPDEF order.
     for (i = 0; i < INHERITED_IV_COUNT; i++)
     {
-        switch (selectedIvs[i])
-        {
-            case 0:
-                iv = GetBoxMonData(&daycare->mons[whichParents[i]].mon, MON_DATA_HP_IV);
-                SetMonData(egg, MON_DATA_HP_IV, &iv);
-                break;
-            case 1:
-                iv = GetBoxMonData(&daycare->mons[whichParents[i]].mon, MON_DATA_ATK_IV);
-                SetMonData(egg, MON_DATA_ATK_IV, &iv);
-                break;
-            case 2:
-                iv = GetBoxMonData(&daycare->mons[whichParents[i]].mon, MON_DATA_DEF_IV);
-                SetMonData(egg, MON_DATA_DEF_IV, &iv);
-                break;
-            case 3:
-                iv = GetBoxMonData(&daycare->mons[whichParents[i]].mon, MON_DATA_SPEED_IV);
-                SetMonData(egg, MON_DATA_SPEED_IV, &iv);
-                break;
-            case 4:
-                iv = GetBoxMonData(&daycare->mons[whichParents[i]].mon, MON_DATA_SPATK_IV);
-                SetMonData(egg, MON_DATA_SPATK_IV, &iv);
-                break;
-            case 5:
-                iv = GetBoxMonData(&daycare->mons[whichParents[i]].mon, MON_DATA_SPDEF_IV);
-                SetMonData(egg, MON_DATA_SPDEF_IV, &iv);
-                break;
-        }
+        struct BoxPokemon *parent = &daycare->mons[whichParents[i]].mon;
+
+        iv = GetBoxMonData(parent, MON_DATA_HP_IV + selectedIvs[i]);
+        iv += GetEvTrainingIVBonus(GetBoxMonData(parent, MON_DATA_HP_EV + selectedIvs[i]));
+        if (iv > MAX_PER_STAT_IVS)
+            iv = MAX_PER_STAT_IVS;
+        SetMonData(egg, MON_DATA_HP_IV + selectedIvs[i], &iv);
     }
 }
 
