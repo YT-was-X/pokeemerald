@@ -9,6 +9,7 @@
 #include "palette.h"
 #include "main.h"
 #include "event_data.h"
+#include "item.h"
 #include "sound.h"
 #include "constants/songs.h"
 #include "text.h"
@@ -919,19 +920,23 @@ static void EggHatchPrintMessage(u8 windowId, u8 *string, u8 x, u8 y, u8 speed)
     AddTextPrinterParameterized4(windowId, FONT_NORMAL, x, y, 0, 0, sEggHatchData->textColor, speed, string);
 }
 
+// Egg cycles taken off each egg per check: 1, +1 for each party Pokémon with Magma Armor
+// or Flame Body (vanilla: 2 if any), doubled while the INCUBATOR is in the bag
 u8 GetEggCyclesToSubtract(void)
 {
-    u8 count, i;
+    u8 count, i, cycles = 1;
     for (count = CalculatePlayerPartyCount(), i = 0; i < count; i++)
     {
         if (!GetMonData(&gPlayerParty[i], MON_DATA_SANITY_IS_EGG))
         {
             u8 ability = GetMonAbility(&gPlayerParty[i]);
             if (ability == ABILITY_MAGMA_ARMOR || ability == ABILITY_FLAME_BODY)
-                return 2;
+                cycles++;
         }
     }
-    return 1;
+    if (CheckBagHasItem(ITEM_INCUBATOR, 1))
+        cycles *= 2;
+    return cycles;
 }
 
 u16 CountPartyAliveNonEggMons(void)

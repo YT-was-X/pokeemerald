@@ -4562,4 +4562,16 @@ const struct Item gItems[] =
         .type = ITEM_USE_BAG_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_ExpShareKey,
     },
+
+    [ITEM_INCUBATOR] =
+    {
+        .name = _("INCUBATOR"),
+        .itemId = ITEM_INCUBATOR,
+        .price = 0,
+        .description = sIncubatorDesc,
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
 };

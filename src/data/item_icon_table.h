@@ -403,6 +403,7 @@ const u32 *const gItemIconTable[ITEMS_COUNT + 1][2] =
     [ITEM_OLD_SEA_MAP] = {gItemIcon_OldSeaMap, gItemIconPalette_OldSeaMap},
     [ITEM_SHINY_CHARM] = {gItemIcon_StarPiece, gItemIconPalette_ShinyCharm},
     [ITEM_EXP_SHARE_KEY] = {gItemIcon_ExpShare, gItemIconPalette_ExpShare},
+    [ITEM_INCUBATOR] = {gItemIcon_LuckyEgg, gItemIconPalette_Incubator},
     // Return to field arrow
     [ITEMS_COUNT] = {gItemIcon_ReturnToFieldArrow, gItemIconPalette_ReturnToFieldArrow},
 };

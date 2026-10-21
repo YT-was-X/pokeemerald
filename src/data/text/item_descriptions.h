@@ -1559,3 +1559,8 @@ static const u8 sExpShareKeyDesc[] = _(
     "Turn it on to share\n"
     "battle EXP. with your\n"
     "whole party.");
+
+static const u8 sIncubatorDesc[] = _(
+    "Keeps EGGS warm.\n"
+    "EGGS in the party\n"
+    "hatch twice as fast.");

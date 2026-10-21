@@ -46,6 +46,21 @@ Route117_EventScript_DaycareReceiveEgg::
 	msgbox Route117_Text_TakeGoodCareOfIt, MSGBOX_DEFAULT
 	special GiveEggFromDaycare
 	clearflag FLAG_PENDING_DAYCARE_EGG
+	goto_if_unset FLAG_RECEIVED_INCUBATOR, Route117_EventScript_DaycareGiveIncubator
+	release
+	end
+
+@ With the first Egg he hands over (or the next one, on older saves)
+Route117_EventScript_DaycareGiveIncubator::
+	msgbox Route117_Text_HaveIncubator, MSGBOX_DEFAULT
+	giveitem ITEM_INCUBATOR
+	goto_if_eq VAR_RESULT, FALSE, Route117_EventScript_DaycareIncubatorNoRoom
+	setflag FLAG_RECEIVED_INCUBATOR
+	msgbox Route117_Text_ExplainIncubator, MSGBOX_DEFAULT
+	release
+	end
+
+Route117_EventScript_DaycareIncubatorNoRoom::
 	release
 	end
 
@@ -433,3 +448,15 @@ Route117_PokemonDayCare_Text_YoullBeLeftWithJustOne:
 	.string "me, you'll be left with just one.\p"
 	.string "You will be better off if you catch\n"
 	.string "some more, I dare say.$"
+
+Route117_Text_HaveIncubator:
+	.string "Oh, and take this along, too.$"
+
+Route117_Text_ExplainIncubator:
+	.string "That INCUBATOR keeps EGGS nice and\n"
+	.string "warm while you travel.\p"
+	.string "As long as it's in your BAG, EGGS in\n"
+	.string "your party will hatch twice as fast.\p"
+	.string "POKéMON with FLAME BODY or MAGMA\n"
+	.string "ARMOR help, too. The more of them\l"
+	.string "you bring along, the better!$"

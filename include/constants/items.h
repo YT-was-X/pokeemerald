@@ -412,6 +412,7 @@ enum {
     // Added
     ITEM_SHINY_CHARM,
     ITEM_EXP_SHARE_KEY,
+    ITEM_INCUBATOR,
 
     ITEMS_COUNT
 };
