@@ -12,6 +12,7 @@
 #include "link_rfu.h"
 #include "main.h"
 #include "menu.h"
+#include "minigame_solo.h"
 #include "minigame_countdown.h"
 #include "palette.h"
 #include "random.h"
@@ -271,6 +272,7 @@ struct PokemonJump
     struct PokemonJump_MonInfo monInfo[MAX_RFU_PLAYERS];
     struct PokemonJump_Player players[MAX_RFU_PLAYERS];
     struct PokemonJump_Player *player;
+    s8 cpuJumpError[MAX_RFU_PLAYERS]; // Solo play: each computer player's timing error, in frames
 };
 
 struct PokemonJumpMons
@@ -287,6 +289,10 @@ static s16 GetPokemonJumpSpeciesIdx(u16 species);
 static void InitJumpMonInfo(struct PokemonJump_MonInfo *, struct Pokemon *);
 static void CB2_PokemonJump(void);
 static void Task_StartPokemonJump(u8);
+static void UpdateCpuJumpers(void);
+static void InitCpuMonInfo(void);
+static bool32 IsSimulatedHere(int multiplayerId);
+static u16 GetNumPokeJumpPlayers(void);
 static void Task_PokemonJump_Leader(u8);
 static void SendLinkData_Leader(void);
 static void Task_PokemonJump_Member(u8);
@@ -532,7 +538,7 @@ void StartPokemonJump(u16 partyId, MainCallback exitCallback)
 {
     u8 taskId;
 
-    if (gReceivedRemoteLinkPlayers)
+    if (gReceivedRemoteLinkPlayers || IsSoloMinigame())
     {
         sPokemonJump = Alloc(sizeof(*sPokemonJump));
         if (sPokemonJump)
@@ -542,7 +548,7 @@ void StartPokemonJump(u16 partyId, MainCallback exitCallback)
             sPokemonJump->mainState = 0;
             sPokemonJump->exitCallback = exitCallback;
             sPokemonJump->taskId = taskId;
-            sPokemonJump->multiplayerId = GetMultiplayerId();
+            sPokemonJump->multiplayerId = IsSoloMinigame() ? 0 : GetMultiplayerId();
             InitJumpMonInfo(&sPokemonJump->monInfo[sPokemonJump->multiplayerId], &gPlayerParty[partyId]);
             InitGame(sPokemonJump);
             SetWordTaskArg(taskId, 2, (u32)sPokemonJump);
@@ -552,6 +558,7 @@ void StartPokemonJump(u16 partyId, MainCallback exitCallback)
     }
 
     // Exit - Players not connected, or alloc failed
+    EndSoloMinigame();
     SetMainCallback2(exitCallback);
 }
 
@@ -563,7 +570,7 @@ static void FreePokemonJump(void)
 
 static void InitGame(struct PokemonJump *jump)
 {
-    jump->numPlayers = GetLinkPlayerCount();
+    jump->numPlayers = GetNumPokeJumpPlayers();
     jump->comm.funcId = FUNC_RESET_GAME;
     jump->comm.data = 0;
     InitPlayerAndJumpTypes();
@@ -581,7 +588,7 @@ static void ResetForNewGame(struct PokemonJump *jump)
     jump->vineTimer = 0;
     jump->vineSpeed = 0;
     jump->updateScore = FALSE;
-    jump->isLeader = GetMultiplayerId() == 0;
+    jump->isLeader = IsSoloMinigame() || GetMultiplayerId() == 0;
     jump->mainState = 0;
     jump->helperState = 0;
     jump->excellentsInRow = 0;
@@ -609,6 +616,7 @@ static void ResetForNewGame(struct PokemonJump *jump)
     {
         jump->atJumpPeak[i] = FALSE;
         jump->jumpTimeStarts[i] = 0;
+        jump->cpuJumpError[i] = 0;
     }
 }
 
@@ -697,8 +705,11 @@ static void Task_StartPokemonJump(u8 taskId)
         if (!FuncIsActiveTask(Task_CommunicateMonInfo))
         {
             StartPokeJumpGfx(&sPokemonJump->jumpGfx);
-            LoadWirelessStatusIndicatorSpriteGfx();
-            CreateWirelessStatusIndicatorSprite(0, 0);
+            if (!IsSoloMinigame())
+            {
+                LoadWirelessStatusIndicatorSpriteGfx();
+                CreateWirelessStatusIndicatorSprite(0, 0);
+            }
             sPokemonJump->mainState++;
         }
         break;
@@ -710,7 +721,7 @@ static void Task_StartPokemonJump(u8 taskId)
         }
         break;
     case 3:
-        if (IsLinkTaskFinished())
+        if (IsSoloMinigame() || IsLinkTaskFinished())
         {
             BlendPalettes(PALETTES_ALL, 16, RGB_BLACK);
             BeginNormalPaletteFade(PALETTES_ALL, -1, 16, 0, RGB_BLACK);
@@ -782,6 +793,16 @@ static void RecvLinkData_Leader(void)
 
     for (i = 1, numReady = 0; i < sPokemonJump->numPlayers; i++)
     {
+        if (IsSoloMinigame())
+        {
+            // Computer players finish each step right away and always play again
+            sPokemonJump->players[i].funcFinished = TRUE;
+            sPokemonJump->memberFuncIds[i] = sPokemonJump->comm.funcId;
+            sPokemonJump->playAgainStates[i] = PLAY_AGAIN_YES;
+            numReady++;
+            continue;
+        }
+
         monState = sPokemonJump->players[i].monState;
         if (RecvPacket_MemberStateToLeader(&sPokemonJump->players[i], i, &funcId, &playAgainState))
         {
@@ -815,6 +836,8 @@ static bool32 (*const sPokeJumpLeaderFuncs[])(void) =
 static void Task_PokemonJump_Leader(u8 taskId)
 {
     RecvLinkData_Leader();
+    if (IsSoloMinigame())
+        UpdateCpuJumpers();
     TryUpdateScore();
     if (!sPokemonJump->funcActive && sPokemonJump->allPlayersReady)
     {
@@ -1224,6 +1247,7 @@ static bool32 ExitGame(void)
     case 2:
         if (!ClosePokeJumpLink())
         {
+            EndSoloMinigame();
             SetMainCallback2(sPokemonJump->exitCallback);
             FreePokemonJump();
         }
@@ -1265,6 +1289,14 @@ static bool32 GivePrize_Member(void)
 
 static bool32 SavePokeJump(void)
 {
+    if (IsSoloMinigame())
+    {
+        // No link save in solo play; the records are saved with the next normal save
+        TryUpdateRecords(sPokemonJump->comm.jumpScore, sPokemonJump->comm.jumpsInRow, sPokemonJump->comm.data);
+        sPokemonJump->nextFuncId = FUNC_ASK_PLAY_AGAIN;
+        return FALSE;
+    }
+
     switch (sPokemonJump->mainState)
     {
     case 0:
@@ -1579,6 +1611,13 @@ static bool32 ClosePokeJumpLink(void)
     case 1:
         if (!RemoveMessageWindow())
         {
+            if (IsSoloMinigame())
+            {
+                // No link to close; just fade out
+                BeginNormalPaletteFade(PALETTES_ALL, -1, 0, 16, RGB_BLACK);
+                sPokemonJump->helperState = 6;
+                break;
+            }
             SetUpPokeJumpGfxFuncById(GFXFUNC_MSG_PLAYER_DROPPED);
             sPokemonJump->helperState++;
         }
@@ -1606,6 +1645,10 @@ static bool32 ClosePokeJumpLink(void)
         break;
     case 5:
         if (!gReceivedRemoteLinkPlayers)
+            return FALSE;
+        break;
+    case 6:
+        if (!gPaletteFade.active)
             return FALSE;
         break;
     }
@@ -1650,6 +1693,16 @@ static void Task_CommunicateMonInfo(u8 taskId)
     switch (tState)
     {
     case 0:
+        if (IsSoloMinigame())
+        {
+            for (i = 0; i < jump->numPlayers; i++)
+                StringCopy(jump->players[i].name, gLinkPlayers[i].name);
+            InitCpuMonInfo();
+            InitPlayerAndJumpTypes();
+            DestroyTask(taskId);
+            break;
+        }
+
         for (i = 0; i < MAX_RFU_PLAYERS; i++)
             tReceivedPacket(i) = FALSE;
 
@@ -1839,8 +1892,16 @@ static void ResetPlayersJumpStates(void)
 
 static void ResetPlayersMonState(void)
 {
-    sPokemonJump->player->monState = MONSTATE_NORMAL;
-    sPokemonJump->player->prevMonState = MONSTATE_NORMAL;
+    int i;
+
+    for (i = 0; i < sPokemonJump->numPlayers; i++)
+    {
+        if (IsSimulatedHere(i))
+        {
+            sPokemonJump->players[i].monState = MONSTATE_NORMAL;
+            sPokemonJump->players[i].prevMonState = MONSTATE_NORMAL;
+        }
+    }
 }
 
 static bool32 IsPlayersMonState(u16 monState)
@@ -1858,18 +1919,24 @@ static void SetMonStateJump(void)
     sPokemonJump->player->monState = MONSTATE_JUMP;
 }
 
-static void SetMonStateHit(void)
+static void SetMonStateHit(struct PokemonJump_Player *player)
 {
-    sPokemonJump->player->prevMonState = sPokemonJump->player->monState;
-    sPokemonJump->player->monState = MONSTATE_HIT;
-    sPokemonJump->player->jumpTimeStart = sPokemonJump->vineTimer;
-    sPokemonJump->player->jumpState = JUMPSTATE_FAILURE;
+    player->prevMonState = player->monState;
+    player->monState = MONSTATE_HIT;
+    player->jumpTimeStart = sPokemonJump->vineTimer;
+    player->jumpState = JUMPSTATE_FAILURE;
 }
 
-static void SetMonStateNormal(void)
+static void SetMonStateNormal(struct PokemonJump_Player *player)
 {
-    sPokemonJump->player->prevMonState = sPokemonJump->player->monState;
-    sPokemonJump->player->monState = MONSTATE_NORMAL;
+    player->prevMonState = player->monState;
+    player->monState = MONSTATE_NORMAL;
+}
+
+// The local player, plus the computer players in solo play
+static bool32 IsSimulatedHere(int multiplayerId)
+{
+    return multiplayerId == sPokemonJump->multiplayerId || IsSoloMinigame();
 }
 
 static const u16 sSoundEffects[MAX_RFU_PLAYERS - 1] = {SE_SHOP, SE_SHINY, SE_M_MORNING_SUN, SE_RG_POKE_JUMP_SUCCESS};
@@ -1929,7 +1996,7 @@ static void HandleMonState(void)
             if (sPokemonJump->players[i].prevMonState != MONSTATE_JUMP || sPokemonJump->players[i].jumpTimeStart != sPokemonJump->jumpTimeStarts[i])
             {
                 // This is a new jump, play SE and init fields for jump handling
-                if (i == sPokemonJump->multiplayerId)
+                if (IsSimulatedHere(i))
                     sPokemonJump->players[i].prevMonState = MONSTATE_JUMP;
 
                 soundFlags |= F_SE_JUMP;
@@ -1942,7 +2009,7 @@ static void HandleMonState(void)
         case MONSTATE_HIT:
             if (sPokemonJump->players[i].prevMonState != MONSTATE_HIT)
             {
-                if (i == sPokemonJump->multiplayerId)
+                if (IsSimulatedHere(i))
                     sPokemonJump->players[i].prevMonState = MONSTATE_HIT;
 
                 soundFlags |= F_SE_FAIL;
@@ -2017,10 +2084,113 @@ static void UpdateJump(int multiplayerId)
         jumpOffset = 0;
 
     SetMonSpriteY(multiplayerId, jumpOffset);
-    if (jumpOffset == 0 && multiplayerId == sPokemonJump->multiplayerId)
-        SetMonStateNormal();
+    if (jumpOffset == 0 && IsSimulatedHere(multiplayerId))
+        SetMonStateNormal(player);
 
     player->jumpOffset = jumpOffset;
+}
+
+// Solo play: give the computer players random Pokémon that can play Pokémon Jump
+static void InitCpuMonInfo(void)
+{
+    int i;
+
+    for (i = 1; i < sPokemonJump->numPlayers; i++)
+    {
+        sPokemonJump->monInfo[i].species = sPokeJumpMons[Random() % ARRAY_COUNT(sPokeJumpMons)].species;
+        sPokemonJump->monInfo[i].personality = Random32();
+        sPokemonJump->monInfo[i].otId = gLinkPlayers[i].trainerId;
+    }
+}
+
+// Number of frames a Pokémon of this jump type is in the air
+static int GetJumpAirtime(u16 jumpType)
+{
+    int i;
+
+    for (i = 0; i < (int)ARRAY_COUNT(sJumpOffsets[0]); i++)
+    {
+        if (sJumpOffsets[jumpType][i] == 0)
+            break;
+    }
+    return i;
+}
+
+// Predicts, from the vine's current state and speed, after how many frames
+// it reaches the point where it can hit the Pokémon (VINE_UPSWING_LOWER)
+// and for how many frames it stays there. Mirrors UpdateVineState/GetVineSpeed.
+static void PredictVineHit(int *framesToHit, int *hitFrames)
+{
+    int timer = sPokemonJump->vineStateTimer;
+    int accel = sPokemonJump->vineSpeedAccel;
+    int frame, hitStart = -1;
+
+    for (frame = 1; frame < 255; frame++)
+    {
+        int speed = sPokemonJump->vineSpeed;
+
+        if (timer <= VINE_STATE_TIMER(VINE_LOWEST))
+        {
+            accel += 80;
+            speed += accel / 256;
+        }
+        timer += speed;
+        if (timer >= VINE_STATE_TIMER(NUM_VINESTATES - 1))
+            timer -= VINE_STATE_TIMER(NUM_VINESTATES - 1);
+
+        if (hitStart < 0 && (timer >> 8) == VINE_UPSWING_LOWER)
+        {
+            hitStart = frame;
+        }
+        else if (hitStart >= 0 && (timer >> 8) != VINE_UPSWING_LOWER)
+        {
+            *framesToHit = hitStart;
+            *hitFrames = frame - hitStart;
+            return;
+        }
+    }
+
+    *framesToHit = 255;
+    *hitFrames = 1;
+}
+
+// Solo play: the computer players jump so they are in the air, centered,
+// while the vine passes under them. They rarely mistime a jump.
+#define CPU_JUMP_MAX_ERROR  2
+#define CPU_MISTAKE_CHANCE  1500 // 1 in this many jumps, twice as often at top speed
+
+static void UpdateCpuJumpers(void)
+{
+    int i, framesToHit, hitFrames, airtime, delay;
+
+    if (sPokemonJump->comm.funcId != FUNC_GAME_ROUND || !sPokemonJump->funcActive
+     || !sPokemonJump->allowVineUpdates || IsGameOver())
+        return;
+
+    PredictVineHit(&framesToHit, &hitFrames);
+    for (i = 1; i < sPokemonJump->numPlayers; i++)
+    {
+        struct PokemonJump_Player *player = &sPokemonJump->players[i];
+
+        if (player->monState != MONSTATE_NORMAL || player->jumpOffset != 0)
+            continue;
+
+        // The Pokémon is airborne from 4 frames after the jump starts
+        airtime = GetJumpAirtime(player->monJumpType);
+        delay = framesToHit + hitFrames / 2 - 4 - airtime / 2 + sPokemonJump->cpuJumpError[i];
+        if (delay > 0)
+            continue;
+
+        player->jumpTimeStart = sPokemonJump->vineTimer;
+        player->prevMonState = player->monState;
+        player->monState = MONSTATE_JUMP;
+
+        // Pick the timing error for the next jump
+        if (Random() % (sPokemonJump->atMaxSpeedStage ? CPU_MISTAKE_CHANCE / 2 : CPU_MISTAKE_CHANCE) == 0)
+            sPokemonJump->cpuJumpError[i] = airtime; // jumps far too late
+        else
+            sPokemonJump->cpuJumpError[i] = (Random() % (2 * CPU_JUMP_MAX_ERROR + 1)) - CPU_JUMP_MAX_ERROR;
+    }
 }
 
 static void TryUpdateScore(void)
@@ -2093,29 +2263,38 @@ static bool32 UpdateVineHitStates(void)
 {
     int i;
 
-    if (sPokemonJump->vineState == VINE_UPSWING_LOWER && sPokemonJump->player->jumpOffset == 0)
+    // In solo play the computer players are checked like the local player
+    for (i = 0; i < sPokemonJump->numPlayers; i++)
     {
-        // Vine is in position to hit the player and jump offset is 0.
-        // Unless the player had just jumped and has been forced to the ground
-        // by someone else getting hit, the player has been hit
-        if (sPokemonJump->player->prevMonState == MONSTATE_JUMP && IsGameOver() == TRUE)
+        struct PokemonJump_Player *player = &sPokemonJump->players[i];
+
+        if (!IsSimulatedHere(i))
+            continue;
+
+        if (sPokemonJump->vineState == VINE_UPSWING_LOWER && player->jumpOffset == 0)
         {
-            sPokemonJump->player->jumpState = JUMPSTATE_SUCCESS;
+            // Vine is in position to hit the player and jump offset is 0.
+            // Unless the player had just jumped and has been forced to the ground
+            // by someone else getting hit, the player has been hit
+            if (player->prevMonState == MONSTATE_JUMP && IsGameOver() == TRUE)
+            {
+                player->jumpState = JUMPSTATE_SUCCESS;
+            }
+            else
+            {
+                // Hit vine
+                SetMonStateHit(player);
+                SetLinkTimeInterval(LINK_INTERVAL_SHORT);
+            }
         }
-        else
+
+        if (sPokemonJump->vineState == VINE_UPSWING_LOW
+         && sPokemonJump->prevVineState == VINE_UPSWING_LOWER
+         && player->monState != MONSTATE_HIT)
         {
-            // Hit vine
-            SetMonStateHit();
+            player->jumpState = JUMPSTATE_SUCCESS;
             SetLinkTimeInterval(LINK_INTERVAL_SHORT);
         }
-    }
-
-    if (sPokemonJump->vineState == VINE_UPSWING_LOW
-     && sPokemonJump->prevVineState == VINE_UPSWING_LOWER
-     && sPokemonJump->player->monState != MONSTATE_HIT)
-    {
-        sPokemonJump->player->jumpState = JUMPSTATE_SUCCESS;
-        SetLinkTimeInterval(LINK_INTERVAL_SHORT);
     }
 
     for (i = 0; i < sPokemonJump->numPlayers; i++)
@@ -2202,6 +2381,8 @@ static int GetPlayersAtJumpPeak(void)
 
 static bool32 AreLinkQueuesEmpty(void)
 {
+    if (IsSoloMinigame())
+        return TRUE;
     return !gRfu.recvQueue.count && !gRfu.sendQueue.count;
 }
 
@@ -2323,6 +2504,8 @@ static u16 GetQuantityLimitedByBag(u16 item, u16 quantity)
 
 static u16 GetNumPokeJumpPlayers(void)
 {
+    if (IsSoloMinigame())
+        return gSoloMinigamePlayers;
     return GetLinkPlayerCount();
 }
 
@@ -3198,6 +3381,9 @@ static void LoadPokeJumpGfx(void)
         PrintScoreSuffixes();
         PrintScore(0);
         LoadUserWindowBorderGfxOnBg(0, 1, BG_PLTT_ID(14));
+        // The message window's palette is left over from the overworld in link play
+        if (IsSoloMinigame())
+            Menu_LoadStdPalAt(BG_PLTT_ID(15));
         CopyBgTilemapBufferToVram(BG_INTERFACE);
         CopyBgTilemapBufferToVram(BG_VENUSAUR);
         CopyBgTilemapBufferToVram(BG_BONUSES);
@@ -3933,6 +4119,9 @@ struct MonInfoPacket
 static void SendPacket_MonInfo(struct PokemonJump_MonInfo *monInfo)
 {
     struct MonInfoPacket packet;
+
+    if (IsSoloMinigame())
+        return;
     packet.id = PACKET_MON_INFO,
     packet.species = monInfo->species,
     packet.otId = monInfo->otId,
@@ -3992,6 +4181,9 @@ struct LeaderStatePacket
 static void SendPacket_LeaderState(struct PokemonJump_Player *player, struct PokemonJump_CommData *comm)
 {
     struct LeaderStatePacket packet;
+
+    if (IsSoloMinigame())
+        return;
     packet.id = PACKET_LEADER_STATE;
     packet.jumpScore = comm->jumpScore;
     packet.receivedBonusFlags = comm->receivedBonusFlags;
@@ -4041,6 +4233,9 @@ struct MemberStatePacket
 static void SendPacket_MemberState(struct PokemonJump_Player *player, u8 funcId, u16 playAgainState)
 {
     struct MemberStatePacket packet;
+
+    if (IsSoloMinigame())
+        return;
     packet.id = PACKET_MEMBER_STATE;
     packet.monState = player->monState;
     packet.jumpState = player->jumpState;
