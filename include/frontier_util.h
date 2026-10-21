@@ -2,6 +2,7 @@
 #define GUARD_FRONTIER_UTIL_H
 
 void CallFrontierUtilFunc(void);
+void CopyFrontierMonToSavedParty(u8 partyId, struct Pokemon *mon);
 u8 GetFrontierBrainStatus(void);
 void CopyFrontierTrainerText(u8 whichText, u16 trainerId);
 void ResetWinStreaks(void);

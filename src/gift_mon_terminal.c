@@ -98,6 +98,7 @@ static const struct GiftItem sGiftItems[] =
 #define GIFT_ITEM_ID_START 100
 
 #define MENU_LEFT       1
+#define MENU_LEFT_RIGHT_SIDE (DISPLAY_TILE_WIDTH - MENU_WIDTH - 2) // clear of the BP window
 #define MENU_TOP        1
 #define MENU_WIDTH      17
 #define MENU_MAX_SHOWN  6
@@ -115,7 +116,13 @@ static const struct GiftItem sGiftItems[] =
 static EWRAM_DATA struct ListMenuItem *sListItems = NULL;
 static EWRAM_DATA struct ShopListEntry *sShopEntries = NULL;
 static EWRAM_DATA u16 sScrollOffset = 0;
-static EWRAM_DATA bool8 sShopPricesInCoins = FALSE;
+enum {
+    SHOP_PRICES_YEN,
+    SHOP_PRICES_COINS,
+    SHOP_PRICES_BP,
+};
+
+static EWRAM_DATA u8 sShopPriceUnit = SHOP_PRICES_YEN;
 
 static void Task_ShopListMenu(u8 taskId);
 static void ShowShopListMenuInternal(const struct ShopListEntry *entries, u32 numEntries);
@@ -189,14 +196,21 @@ void ShowGiftMonTerminalMenu(void)
 // entry's id, or MULTI_B_PRESSED. The script must waitstate after it.
 void ShowShopListMenu(const struct ShopListEntry *entries, u32 numEntries)
 {
-    sShopPricesInCoins = FALSE;
+    sShopPriceUnit = SHOP_PRICES_YEN;
     ShowShopListMenuInternal(entries, numEntries);
 }
 
 // Same, with prices in Game Corner coins
 void ShowShopListMenuCoins(const struct ShopListEntry *entries, u32 numEntries)
 {
-    sShopPricesInCoins = TRUE;
+    sShopPriceUnit = SHOP_PRICES_COINS;
+    ShowShopListMenuInternal(entries, numEntries);
+}
+
+// Same, with prices in Battle Points, on the right side of the screen
+void ShowShopListMenuBP(const struct ShopListEntry *entries, u32 numEntries)
+{
+    sShopPriceUnit = SHOP_PRICES_BP;
     ShowShopListMenuInternal(entries, numEntries);
 }
 
@@ -219,6 +233,9 @@ static void ShowShopListMenuInternal(const struct ShopListEntry *entries, u32 nu
     u8 taskId = CreateTask(Task_ShopListMenu, 80);
     struct Task *task = &gTasks[taskId];
     u32 count;
+    u8 left = (sShopPriceUnit == SHOP_PRICES_BP) ? MENU_LEFT_RIGHT_SIDE : MENU_LEFT;
+
+    arrows.firstX = arrows.secondX = (left + MENU_WIDTH / 2) * 8 + 4;
 
     LockPlayerFieldControls();
     sListItems = AllocZeroed((numEntries + 1) * sizeof(*sListItems));
@@ -234,7 +251,7 @@ static void ShowShopListMenuInternal(const struct ShopListEntry *entries, u32 nu
     count++;
     task->tNumItems = count;
 
-    windowTemplate = CreateWindowTemplate(0, MENU_LEFT, MENU_TOP, MENU_WIDTH, min(count, MENU_MAX_SHOWN) * 2, 15, 0x64);
+    windowTemplate = CreateWindowTemplate(0, left, MENU_TOP, MENU_WIDTH, min(count, MENU_MAX_SHOWN) * 2, 15, 0x64);
     task->tWindowId = AddWindow(&windowTemplate);
     SetStandardWindowBorderStyle(task->tWindowId, FALSE);
 
@@ -264,6 +281,7 @@ static void ShowShopListMenuInternal(const struct ShopListEntry *entries, u32 nu
 }
 
 static const u8 sText_CoinsVar1[] = _("{STR_VAR_1}C");
+static const u8 sText_BPVar1[] = _("{STR_VAR_1}BP");
 
 static void PrintShopListPrice(u8 windowId, u32 itemId, u8 y)
 {
@@ -272,8 +290,10 @@ static void PrintShopListPrice(u8 windowId, u32 itemId, u8 y)
     if (itemId == LIST_CANCEL || sShopEntries[itemId].price == 0)
         return;
     ConvertIntToDecimalStringN(gStringVar1, sShopEntries[itemId].price, STR_CONV_MODE_LEFT_ALIGN, 6);
-    if (sShopPricesInCoins)
+    if (sShopPriceUnit == SHOP_PRICES_COINS)
         StringExpandPlaceholders(price, sText_CoinsVar1);
+    else if (sShopPriceUnit == SHOP_PRICES_BP)
+        StringExpandPlaceholders(price, sText_BPVar1);
     else
         StringExpandPlaceholders(price, gText_PokedollarVar1);
     AddTextPrinterParameterized(windowId, FONT_NARROW, price,

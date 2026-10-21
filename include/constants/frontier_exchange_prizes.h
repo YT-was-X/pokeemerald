@@ -1,0 +1,17 @@
+#ifndef GUARD_CONSTANTS_FRONTIER_EXCHANGE_PRIZES_H
+#define GUARD_CONSTANTS_FRONTIER_EXCHANGE_PRIZES_H
+
+// Categories of the extra Battle Frontier Exchange Service Corner clerk (VAR_0x8004)
+#define BP_PRIZE_CATEGORY_TRAINING   0
+#define BP_PRIZE_CATEGORY_HOLD_ITEMS 1
+#define BP_PRIZE_CATEGORY_TYPE_ITEMS 2
+#define BP_PRIZE_CATEGORY_EVO_ITEMS  3
+#define BP_PRIZE_CATEGORY_TMS        4
+#define NUM_BP_PRIZE_CATEGORIES      5
+
+// Results of the TryBuyFrontierPrize special
+#define BP_PRIZE_BOUGHT       0
+#define BP_PRIZE_NOT_ENOUGH   1
+#define BP_PRIZE_BAG_FULL     2
+
+#endif // GUARD_CONSTANTS_FRONTIER_EXCHANGE_PRIZES_H

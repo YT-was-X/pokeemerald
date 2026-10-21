@@ -306,7 +306,7 @@ BattleFrontier_BattlePikeLobby_Text_NotEnoughValidMonsLv50:
 	.string "You do not have three eligible\n"
 	.string "POKéMON for the Battle Choice event.\p"
 	.string "You must have three different POKéMON\n"
-	.string "of Level 50 or less to enter.\p"
+	.string "to enter.\p"
 	.string "They also must be holding different\n"
 	.string "kinds of items.\p"
 	.string "EGGS{STR_VAR_1} ineligible.\p"

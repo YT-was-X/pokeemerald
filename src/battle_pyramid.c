@@ -2,6 +2,7 @@
 #include "battle_pyramid.h"
 #include "battle_pyramid_bag.h"
 #include "event_data.h"
+#include "frontier_util.h"
 #include "battle.h"
 #include "battle_setup.h"
 #include "battle_tower.h"
@@ -1216,7 +1217,7 @@ static void RestorePyramidPlayerParty(void)
                     if (l == MAX_MON_MOVES)
                         SetMonMoveSlot(&gPlayerParty[j], MOVE_SKETCH, k);
                 }
-                gSaveBlock1Ptr->playerParty[partyIndex] = gPlayerParty[j];
+                CopyFrontierMonToSavedParty(partyIndex, &gPlayerParty[j]);
                 gSelectedOrderFromParty[j] = partyIndex + 1;
                 break;
             }

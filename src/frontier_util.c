@@ -884,6 +884,44 @@ static void SetFrontierData(void)
     }
 }
 
+// Level 50 mode (and the Battle Tents, which use the same cap) accepts Pokémon above
+// Lv. 50 and has them battle at Lv. 50, like newer games. Only the challenge copies in
+// gPlayerParty are scaled; CopyFrontierMonToSavedParty keeps the real EXP when they're
+// written back to the saved party.
+static void ScaleFrontierPartyToLevel50(void)
+{
+    s32 i;
+
+    if (gSaveBlock2Ptr->frontier.lvlMode != FRONTIER_LVL_50 && gSaveBlock2Ptr->frontier.lvlMode != FRONTIER_LVL_TENT)
+        return;
+
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        u16 species = GetMonData(&gPlayerParty[i], MON_DATA_SPECIES);
+        if (species != SPECIES_NONE && GetMonData(&gPlayerParty[i], MON_DATA_LEVEL) > FRONTIER_MAX_LEVEL_50)
+        {
+            u32 exp = gExperienceTables[gSpeciesInfo[species].growthRate][FRONTIER_MAX_LEVEL_50];
+            SetMonData(&gPlayerParty[i], MON_DATA_EXP, &exp);
+            CalculateMonStats(&gPlayerParty[i]);
+        }
+    }
+}
+
+// Writes a challenge Pokémon back to the saved party, undoing any Level 50 scaling
+// (EXP never changes during a challenge otherwise).
+void CopyFrontierMonToSavedParty(u8 partyId, struct Pokemon *mon)
+{
+    struct Pokemon *saved = &gSaveBlock1Ptr->playerParty[partyId];
+    u32 savedExp = GetMonData(saved, MON_DATA_EXP);
+
+    *saved = *mon;
+    if (savedExp > GetMonData(saved, MON_DATA_EXP))
+    {
+        SetMonData(saved, MON_DATA_EXP, &savedExp);
+        CalculateMonStats(saved);
+    }
+}
+
 static void SetSelectedPartyOrder(void)
 {
     s32 i;
@@ -892,6 +930,7 @@ static void SetSelectedPartyOrder(void)
     for (i = 0; i < gSpecialVar_0x8005; i++)
         gSelectedOrderFromParty[i] = gSaveBlock2Ptr->frontier.selectedPartyMons[i];
     ReducePlayerPartyToSelectedMons();
+    ScaleFrontierPartyToLevel50();
 }
 
 static void DoSoftReset_(void)
@@ -912,7 +951,7 @@ static void SaveSelectedParty(void)
     {
         u16 monId = gSaveBlock2Ptr->frontier.selectedPartyMons[i] - 1;
         if (monId < PARTY_SIZE)
-            gSaveBlock1Ptr->playerParty[gSaveBlock2Ptr->frontier.selectedPartyMons[i] - 1] = gPlayerParty[i];
+            CopyFrontierMonToSavedParty(monId, &gPlayerParty[i]);
     }
 }
 
@@ -1983,8 +2022,7 @@ static void AppendIfValid(u16 species, u16 heldItem, u16 hp, u8 lvlMode, u8 monL
 
     if (gFrontierBannedSpecies[i] != 0xFFFF)
         return;
-    if (lvlMode == FRONTIER_LVL_50 && monLevel > FRONTIER_MAX_LEVEL_50)
-        return;
+    // Pokémon above Lv. 50 may enter Level 50 mode; they battle at Lv. 50 (ScaleFrontierPartyToLevel50)
 
     for (i = 0; i < *count && speciesArray[i] != species; i++)
         ;

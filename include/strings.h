@@ -1031,6 +1031,9 @@ extern const u8 gText_CampSpDef[];
 extern const u8 gText_PrizeItems[];
 extern const u8 gText_PrizeEvoItems[];
 extern const u8 gText_PrizePokemon[];
+extern const u8 gText_PrizeTraining[];
+extern const u8 gText_PrizeHoldItems[];
+extern const u8 gText_PrizeTypeItems[];
 
 extern const u8 gText_OhABite[];
 extern const u8 gText_PokemonOnHook[];

@@ -5791,7 +5791,7 @@ static void ResetSketchedMoves(void)
                 SetMonMoveSlot(&gPlayerParty[i], MOVE_SKETCH, moveSlot);
         }
 
-        gSaveBlock1Ptr->playerParty[playerMonId] = gPlayerParty[i];
+        CopyFrontierMonToSavedParty(playerMonId, &gPlayerParty[i]);
     }
 }
 

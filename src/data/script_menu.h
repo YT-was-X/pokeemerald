@@ -795,6 +795,17 @@ static const struct MenuAction MultichoiceList_SoloMinigames[] =
     {gText_Exit},
 };
 
+// Order matches the BP_PRIZE_CATEGORY_* constants
+static const struct MenuAction MultichoiceList_FrontierPrizeTypes[] =
+{
+    {gText_PrizeTraining},
+    {gText_PrizeHoldItems},
+    {gText_PrizeTypeItems},
+    {gText_PrizeEvoItems},
+    {gText_PrizeTMs},
+    {gText_Quit},
+};
+
 // Order matches STAT_HP..STAT_SPDEF
 static const struct MenuAction MultichoiceList_TrainingCampStats[] =
 {
@@ -937,6 +948,7 @@ static const struct MultichoiceListStruct sMultichoiceLists[] =
     [MULTI_GAME_CORNER_PRIZE_TYPES]    = MULTICHOICE(MultichoiceList_GameCornerPrizeTypes),
     [MULTI_SOLO_MINIGAMES]             = MULTICHOICE(MultichoiceList_SoloMinigames),
     [MULTI_TRAINING_CAMP_STATS]        = MULTICHOICE(MultichoiceList_TrainingCampStats),
+    [MULTI_FRONTIER_PRIZE_TYPES]       = MULTICHOICE(MultichoiceList_FrontierPrizeTypes),
 };
 
 const u8 *const gStdStrings[] =

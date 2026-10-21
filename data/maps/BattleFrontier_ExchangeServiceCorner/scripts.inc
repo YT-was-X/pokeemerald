@@ -408,6 +408,55 @@ BattleFrontier_ExchangeServiceCorner_EventScript_ScopeLens::
 	goto BattleFrontier_ExchangeServiceCorner_EventScript_TryPurchasePrize
 	end
 
+@ Extra clerk in the middle of the counter: more prizes for BP (src/frontier_exchange_prizes.c)
+BattleFrontier_ExchangeServiceCorner_EventScript_PrizeClerk::
+	lock
+	faceplayer
+	call BattleFrontier_ExchangeServiceCorner_EventScript_ClerkWelcome
+BattleFrontier_ExchangeServiceCorner_EventScript_ChoosePrizeCategory::
+	message BattleFrontier_ExchangeServiceCorner_Text_WhichKindOfPrize
+	waitmessage
+	multichoice 18, 0, MULTI_FRONTIER_PRIZE_TYPES, FALSE
+	switch VAR_RESULT
+	case BP_PRIZE_CATEGORY_TRAINING, BattleFrontier_ExchangeServiceCorner_EventScript_PrizeCategoryChosen
+	case BP_PRIZE_CATEGORY_HOLD_ITEMS, BattleFrontier_ExchangeServiceCorner_EventScript_PrizeCategoryChosen
+	case BP_PRIZE_CATEGORY_TYPE_ITEMS, BattleFrontier_ExchangeServiceCorner_EventScript_PrizeCategoryChosen
+	case BP_PRIZE_CATEGORY_EVO_ITEMS, BattleFrontier_ExchangeServiceCorner_EventScript_PrizeCategoryChosen
+	case BP_PRIZE_CATEGORY_TMS, BattleFrontier_ExchangeServiceCorner_EventScript_PrizeCategoryChosen
+	goto BattleFrontier_ExchangeServiceCorner_EventScript_ClerkGoodbye
+	end
+
+BattleFrontier_ExchangeServiceCorner_EventScript_PrizeCategoryChosen::
+	copyvar VAR_0x8004, VAR_RESULT
+BattleFrontier_ExchangeServiceCorner_EventScript_ChoosePrize::
+	message BattleFrontier_ExchangeServiceCorner_Text_WhichPrize
+	waitmessage
+	special ShowFrontierPrizeMenu
+	waitstate
+	goto_if_eq VAR_RESULT, MULTI_B_PRESSED, BattleFrontier_ExchangeServiceCorner_EventScript_ChoosePrizeCategory
+	copyvar VAR_0x8005, VAR_RESULT
+	special BufferFrontierPrizeInfo
+	msgbox BattleFrontier_ExchangeServiceCorner_Text_ConfirmPrize, MSGBOX_YESNO
+	goto_if_eq VAR_RESULT, NO, BattleFrontier_ExchangeServiceCorner_EventScript_ChoosePrize
+	specialvar VAR_RESULT, TryBuyFrontierPrize
+	goto_if_eq VAR_RESULT, BP_PRIZE_NOT_ENOUGH, BattleFrontier_ExchangeServiceCorner_EventScript_PrizeNotEnoughBP
+	goto_if_eq VAR_RESULT, BP_PRIZE_BAG_FULL, BattleFrontier_ExchangeServiceCorner_EventScript_PrizeBagFull
+	special UpdateBattlePointsWindow
+	playse SE_SHOP
+	msgbox BattleFrontier_ExchangeServiceCorner_Text_HereIsYourPrize, MSGBOX_DEFAULT
+	goto BattleFrontier_ExchangeServiceCorner_EventScript_ChoosePrize
+	end
+
+BattleFrontier_ExchangeServiceCorner_EventScript_PrizeNotEnoughBP::
+	msgbox BattleFrontier_ExchangeServiceCorner_Text_DontHaveEnoughPoints, MSGBOX_DEFAULT
+	goto BattleFrontier_ExchangeServiceCorner_EventScript_ChoosePrize
+	end
+
+BattleFrontier_ExchangeServiceCorner_EventScript_PrizeBagFull::
+	msgbox BattleFrontier_ExchangeServiceCorner_Text_DontHaveSpaceToHoldIt, MSGBOX_DEFAULT
+	goto BattleFrontier_ExchangeServiceCorner_EventScript_ChoosePrize
+	end
+
 BattleFrontier_ExchangeServiceCorner_EventScript_Man::
 	msgbox BattleFrontier_ExchangeServiceCorner_Text_GoGetYourOwnDoll, MSGBOX_NPC
 	end
@@ -719,3 +768,13 @@ BattleFrontier_ExchangeServiceCorner_Text_FocusBandDesc::
 BattleFrontier_ExchangeServiceCorner_Text_ScopeLensDesc::
 	.string "A hold item that raises the\n"
 	.string "critical-hit rate.$"
+
+BattleFrontier_ExchangeServiceCorner_Text_WhichKindOfPrize:
+	.string "Which kind of prize would you like?$"
+
+BattleFrontier_ExchangeServiceCorner_Text_WhichPrize:
+	.string "Which prize would you like?$"
+
+BattleFrontier_ExchangeServiceCorner_Text_ConfirmPrize:
+	.string "The {STR_VAR_1}?\n"
+	.string "That will be {STR_VAR_2} BP. OK?$"

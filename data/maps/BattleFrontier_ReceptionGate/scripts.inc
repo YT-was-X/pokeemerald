@@ -422,8 +422,8 @@ BattleFrontier_ReceptionGate_Text_LevelModeInfo:
 	.string "two courses--Level 50 and Open Level.$"
 
 BattleFrontier_ReceptionGate_Text_Level50Info:
-	.string "The Level 50 course is open to POKéMON\n"
-	.string "up to and including Level 50.\p"
+	.string "In the Level 50 course, POKéMON\n"
+	.string "above Level 50 battle at Level 50.\p"
 	.string "Please keep in mind, however, that\n"
 	.string "no TRAINER you face will have any\l"
 	.string "POKéMON below Level 50.\p"

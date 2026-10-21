@@ -569,3 +569,6 @@ gSpecials::
 	def_special BufferTrainingCampFee
 	def_special TakeMonFromTrainingCamp
 	def_special GivePowerItemsToPlayer
+	def_special ShowFrontierPrizeMenu
+	def_special BufferFrontierPrizeInfo
+	def_special TryBuyFrontierPrize

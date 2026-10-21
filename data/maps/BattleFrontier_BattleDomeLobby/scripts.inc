@@ -486,7 +486,7 @@ BattleFrontier_BattleDomeLobby_Text_NotEnoughValidMonsLv50:
 	.string "Excuse me!\p"
 	.string "You don't have three eligible POKéMON.\p"
 	.string "You must have three different POKéMON\n"
-	.string "of Level 50 or less to enter.\p"
+	.string "to enter.\p"
 	.string "They also must be holding different\n"
 	.string "kinds of items.\p"
 	.string "EGGS{STR_VAR_1} ineligible.\p"
