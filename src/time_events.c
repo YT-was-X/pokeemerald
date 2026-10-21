@@ -39,10 +39,17 @@ void UpdateMirageRnd(u16 days)
     SetMirageRnd(rnd);
 }
 
+// Mirage Island also appears on 1 day in this many (vanilla: only when a party
+// Pokémon's personality matches the day's number, about 1 in 65536 per Pokémon)
+#define MIRAGE_ISLAND_DAILY_CHANCE 4
+
 bool8 IsMirageIslandPresent(void)
 {
     u16 rnd = GetMirageRnd() >> 16;
     int i;
+
+    if (rnd % MIRAGE_ISLAND_DAILY_CHANCE == 0)
+        return TRUE;
 
     for (i = 0; i < PARTY_SIZE; i++)
         if (GetMonData(&gPlayerParty[i], MON_DATA_SPECIES) && (GetMonData(&gPlayerParty[i], MON_DATA_PERSONALITY) & 0xFFFF) == rnd)
