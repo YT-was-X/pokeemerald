@@ -848,7 +848,7 @@ static const u8 sEnvironmentToType[] =
 // - ITEM_ULTRA_BALL skips Master Ball and ITEM_NONE
 static const u8 sBallCatchBonuses[] =
 {
-    [ITEM_ULTRA_BALL - ITEM_ULTRA_BALL]  = 20,
+    [ITEM_ULTRA_BALL - ITEM_ULTRA_BALL]  = 25, // vanilla 20 (2x)
     [ITEM_GREAT_BALL - ITEM_ULTRA_BALL]  = 15,
     [ITEM_POKE_BALL - ITEM_ULTRA_BALL]   = 10,
     [ITEM_SAFARI_BALL - ITEM_ULTRA_BALL] = 15
