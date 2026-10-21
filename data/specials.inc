@@ -546,3 +546,8 @@ gSpecials::
 	def_special ShowGiftMonTerminalMenu
 	def_special BufferGiftMonInfo
 	def_special TryBuyGiftMon
+	def_special ShowBlackMarketMenu
+	def_special BufferBlackMarketMonInfo
+	def_special TryBuyBlackMarketMon
+	def_special CheckBlackMarketSell
+	def_special SellBlackMarketMon

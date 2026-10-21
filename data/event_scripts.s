@@ -11,6 +11,7 @@
 #include "constants/battle_pyramid.h"
 #include "constants/battle_setup.h"
 #include "constants/gift_mon_terminal.h"
+#include "constants/black_market.h"
 #include "constants/battle_tent.h"
 #include "constants/battle_tower.h"
 #include "constants/berry.h"

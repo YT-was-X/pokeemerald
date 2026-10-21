@@ -5,6 +5,7 @@
 #include "global.h"
 #include "data.h"
 #include "event_data.h"
+#include "gift_mon_terminal.h"
 #include "international_string_util.h"
 #include "list_menu.h"
 #include "malloc.h"
@@ -90,10 +91,11 @@ static const struct GiftMon sGiftMons[] =
 #define tArrowTaskId  data[3]
 
 static EWRAM_DATA struct ListMenuItem *sListItems = NULL;
+static EWRAM_DATA struct MonShopEntry *sShopEntries = NULL;
 static EWRAM_DATA u16 sScrollOffset = 0;
 
-static void Task_GiftMonMenu(u8 taskId);
-static void PrintGiftMonPrice(u8 windowId, u32 itemId, u8 y);
+static void Task_MonShopMenu(u8 taskId);
+static void PrintMonShopPrice(u8 windowId, u32 itemId, u8 y);
 
 static bool8 IsGiftMonUnlocked(const struct GiftMon *giftMon)
 {
@@ -128,6 +130,26 @@ void CountUnlockedGiftMons(void)
 // or MULTI_B_PRESSED. Use waitstate after it.
 void ShowGiftMonTerminalMenu(void)
 {
+    struct MonShopEntry entries[ARRAY_COUNT(sGiftMons)];
+    u32 i, count = 0;
+
+    for (i = 0; i < ARRAY_COUNT(sGiftMons); i++)
+    {
+        if (IsGiftMonUnlocked(&sGiftMons[i]))
+        {
+            entries[count].species = sGiftMons[i].species;
+            entries[count].id = i;
+            entries[count].price = sGiftMons[i].price;
+            count++;
+        }
+    }
+    ShowMonShopMenu(entries, count);
+}
+
+// Shows a list of Pokémon with prices, plus EXIT. VAR_RESULT = the chosen
+// entry's id, or MULTI_B_PRESSED. The script must waitstate after it.
+void ShowMonShopMenu(const struct MonShopEntry *entries, u32 numEntries)
+{
     static const struct ScrollArrowsTemplate sArrowsTemplate = {
         .firstArrowType = SCROLL_ARROW_UP,
         .firstX = (MENU_LEFT + MENU_WIDTH / 2) * 8 + 4,
@@ -142,20 +164,18 @@ void ShowGiftMonTerminalMenu(void)
     struct ListMenuTemplate listTemplate = {0};
     struct WindowTemplate windowTemplate;
     struct ScrollArrowsTemplate arrows = sArrowsTemplate;
-    u8 taskId = CreateTask(Task_GiftMonMenu, 80);
+    u8 taskId = CreateTask(Task_MonShopMenu, 80);
     struct Task *task = &gTasks[taskId];
-    u32 i, count = 0;
+    u32 count;
 
     LockPlayerFieldControls();
-    sListItems = AllocZeroed((ARRAY_COUNT(sGiftMons) + 1) * sizeof(*sListItems));
-    for (i = 0; i < ARRAY_COUNT(sGiftMons); i++)
+    sListItems = AllocZeroed((numEntries + 1) * sizeof(*sListItems));
+    sShopEntries = Alloc(numEntries * sizeof(*sShopEntries));
+    for (count = 0; count < numEntries; count++)
     {
-        if (IsGiftMonUnlocked(&sGiftMons[i]))
-        {
-            sListItems[count].name = gSpeciesNames[sGiftMons[i].species];
-            sListItems[count].id = i;
-            count++;
-        }
+        sShopEntries[count] = entries[count];
+        sListItems[count].name = gSpeciesNames[entries[count].species];
+        sListItems[count].id = count;
     }
     sListItems[count].name = gText_Exit;
     sListItems[count].id = LIST_CANCEL;
@@ -170,7 +190,7 @@ void ShowGiftMonTerminalMenu(void)
     listTemplate.totalItems = count;
     listTemplate.maxShowed = min(count, MENU_MAX_SHOWN);
     listTemplate.windowId = task->tWindowId;
-    listTemplate.itemPrintFunc = PrintGiftMonPrice;
+    listTemplate.itemPrintFunc = PrintMonShopPrice;
     listTemplate.item_X = 8;
     listTemplate.upText_Y = 1;
     listTemplate.cursorPal = 2;
@@ -191,19 +211,19 @@ void ShowGiftMonTerminalMenu(void)
     CopyWindowToVram(task->tWindowId, COPYWIN_FULL);
 }
 
-static void PrintGiftMonPrice(u8 windowId, u32 itemId, u8 y)
+static void PrintMonShopPrice(u8 windowId, u32 itemId, u8 y)
 {
     u8 price[16];
 
     if (itemId == LIST_CANCEL)
         return;
-    ConvertIntToDecimalStringN(gStringVar1, sGiftMons[itemId].price, STR_CONV_MODE_LEFT_ALIGN, 6);
+    ConvertIntToDecimalStringN(gStringVar1, sShopEntries[itemId].price, STR_CONV_MODE_LEFT_ALIGN, 6);
     StringExpandPlaceholders(price, gText_PokedollarVar1);
     AddTextPrinterParameterized(windowId, FONT_NARROW, price,
                                 GetStringRightAlignXOffset(FONT_NARROW, price, MENU_PRICE_X), y, TEXT_SKIP_DRAW, NULL);
 }
 
-static void CloseGiftMonMenu(u8 taskId)
+static void CloseMonShopMenu(u8 taskId)
 {
     struct Task *task = &gTasks[taskId];
 
@@ -212,13 +232,15 @@ static void CloseGiftMonMenu(u8 taskId)
     DestroyListMenuTask(task->tListTaskId, NULL, NULL);
     Free(sListItems);
     sListItems = NULL;
+    Free(sShopEntries);
+    sShopEntries = NULL;
     ClearStdWindowAndFrameToTransparent(task->tWindowId, TRUE);
     RemoveWindow(task->tWindowId);
     DestroyTask(taskId);
     ScriptContext_Enable();
 }
 
-static void Task_GiftMonMenu(u8 taskId)
+static void Task_MonShopMenu(u8 taskId)
 {
     s32 input = ListMenu_ProcessInput(gTasks[taskId].tListTaskId);
 
@@ -230,12 +252,12 @@ static void Task_GiftMonMenu(u8 taskId)
     case LIST_CANCEL:
         gSpecialVar_Result = MULTI_B_PRESSED;
         PlaySE(SE_SELECT);
-        CloseGiftMonMenu(taskId);
+        CloseMonShopMenu(taskId);
         break;
     default:
-        gSpecialVar_Result = input;
+        gSpecialVar_Result = sShopEntries[input].id;
         PlaySE(SE_SELECT);
-        CloseGiftMonMenu(taskId);
+        CloseMonShopMenu(taskId);
         break;
     }
 }
@@ -255,36 +277,40 @@ void BufferGiftMonInfo(void)
 void TryBuyGiftMon(void)
 {
     const struct GiftMon *giftMon = &sGiftMons[gSpecialVar_0x8004];
-    struct Pokemon mon;
-    u8 fateful = TRUE;
-    u16 dexNum;
 
-    if (!IsEnoughMoney(&gSaveBlock1Ptr->money, giftMon->price))
-    {
-        gSpecialVar_Result = GIFT_MON_NO_MONEY;
-        return;
-    }
+    // Event Pokémon, so Mew and Deoxys obey
+    gSpecialVar_Result = BuyMonForPlayer(giftMon->species, giftMon->level, giftMon->price, TRUE);
+}
+
+// Charges the price and gives the player a new Pokémon. Returns a GIFT_MON_* result.
+u16 BuyMonForPlayer(u16 species, u8 level, u32 price, bool8 fatefulEncounter)
+{
+    struct Pokemon mon;
+    u16 result, dexNum;
+
+    if (!IsEnoughMoney(&gSaveBlock1Ptr->money, price))
+        return GIFT_MON_NO_MONEY;
 
     // Shiny rolls apply, as for any Pokémon created for the player
-    CreateMon(&mon, giftMon->species, giftMon->level, USE_RANDOM_IVS, FALSE, 0, OT_ID_PLAYER_ID, 0);
-    // Event Pokémon, so Mew and Deoxys obey
-    SetMonData(&mon, MON_DATA_MODERN_FATEFUL_ENCOUNTER, &fateful);
+    CreateMon(&mon, species, level, USE_RANDOM_IVS, FALSE, 0, OT_ID_PLAYER_ID, 0);
+    if (fatefulEncounter)
+        SetMonData(&mon, MON_DATA_MODERN_FATEFUL_ENCOUNTER, &fatefulEncounter);
 
     switch (GiveMonToPlayer(&mon))
     {
     case MON_GIVEN_TO_PARTY:
-        gSpecialVar_Result = GIFT_MON_BOUGHT_PARTY;
+        result = GIFT_MON_BOUGHT_PARTY;
         break;
     case MON_GIVEN_TO_PC:
-        gSpecialVar_Result = GIFT_MON_BOUGHT_PC;
+        result = GIFT_MON_BOUGHT_PC;
         break;
     default:
-        gSpecialVar_Result = GIFT_MON_NO_ROOM;
-        return;
+        return GIFT_MON_NO_ROOM;
     }
 
-    RemoveMoney(&gSaveBlock1Ptr->money, giftMon->price);
-    dexNum = SpeciesToNationalPokedexNum(giftMon->species);
+    RemoveMoney(&gSaveBlock1Ptr->money, price);
+    dexNum = SpeciesToNationalPokedexNum(species);
     GetSetPokedexFlag(dexNum, FLAG_SET_SEEN);
     GetSetPokedexFlag(dexNum, FLAG_SET_CAUGHT);
+    return result;
 }
