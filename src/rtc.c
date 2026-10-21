@@ -287,10 +287,15 @@ void RtcCalcTimeDifference(struct SiiRtcInfo *rtc, struct Time *result, struct T
     }
 }
 
+// The in-game time of day always follows the RTC (on an emulator, the device's
+// clock). Only the day part of the saved offset is used, so the in-game day count
+// stays continuous; the hours, minutes and seconds set on the wall clock are ignored.
 void RtcCalcLocalTime(void)
 {
+    struct Time dayOffset = {.days = gSaveBlock2Ptr->localTimeOffset.days};
+
     RtcGetInfo(&sRtc);
-    RtcCalcTimeDifference(&sRtc, &gLocalTime, &gSaveBlock2Ptr->localTimeOffset);
+    RtcCalcTimeDifference(&sRtc, &gLocalTime, &dayOffset);
 }
 
 void RtcInitLocalTimeOffset(s32 hour, s32 minute)
