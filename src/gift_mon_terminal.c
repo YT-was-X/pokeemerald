@@ -1,10 +1,11 @@
 // Gift Pokémon terminal on the second floor of every Pokémon Center.
-// Sells gift and event Pokémon that Emerald can't otherwise get. Each gym
-// badge unlocks more, and beating the Elite Four unlocks the legendaries.
-// Pokémon can be bought any number of times.
+// Sells gift and event Pokémon that Emerald can't otherwise get, and the five
+// fossils (revived at Devon Corp.). Each gym badge unlocks more, and beating
+// the Elite Four unlocks the legendaries. Everything can be bought any number of times.
 #include "global.h"
 #include "data.h"
 #include "event_data.h"
+#include "item.h"
 #include "gift_mon_terminal.h"
 #include "international_string_util.h"
 #include "list_menu.h"
@@ -20,6 +21,7 @@
 #include "task.h"
 #include "window.h"
 #include "constants/gift_mon_terminal.h"
+#include "constants/items.h"
 #include "constants/script_menu.h"
 #include "constants/songs.h"
 #include "constants/species.h"
@@ -75,6 +77,26 @@ static const struct GiftMon sGiftMons[] =
     {SPECIES_RAYQUAZA,  70, UNLOCK_CHAMPION, 80000},
 };
 
+struct GiftItem
+{
+    u16 item;
+    u8 unlock;
+    u32 price;
+};
+
+static const struct GiftItem sGiftItems[] =
+{
+    // 1 badge: fossils
+    {ITEM_ROOT_FOSSIL,  1,  7000},
+    {ITEM_CLAW_FOSSIL,  1,  7000},
+    {ITEM_HELIX_FOSSIL, 1,  7000},
+    {ITEM_DOME_FOSSIL,  1,  7000},
+    {ITEM_OLD_AMBER,    1, 10000},
+};
+
+// Menu ids of items start here; lower ids are sGiftMons entries
+#define GIFT_ITEM_ID_START 100
+
 #define MENU_LEFT       1
 #define MENU_TOP        1
 #define MENU_WIDTH      17
@@ -91,18 +113,18 @@ static const struct GiftMon sGiftMons[] =
 #define tArrowTaskId  data[3]
 
 static EWRAM_DATA struct ListMenuItem *sListItems = NULL;
-static EWRAM_DATA struct MonShopEntry *sShopEntries = NULL;
+static EWRAM_DATA struct ShopListEntry *sShopEntries = NULL;
 static EWRAM_DATA u16 sScrollOffset = 0;
 
-static void Task_MonShopMenu(u8 taskId);
-static void PrintMonShopPrice(u8 windowId, u32 itemId, u8 y);
+static void Task_ShopListMenu(u8 taskId);
+static void PrintShopListPrice(u8 windowId, u32 itemId, u8 y);
 
-static bool8 IsGiftMonUnlocked(const struct GiftMon *giftMon)
+static bool8 IsUnlocked(u8 unlock)
 {
     u32 badges = 0;
     u32 i;
 
-    if (giftMon->unlock == UNLOCK_CHAMPION)
+    if (unlock == UNLOCK_CHAMPION)
         return FlagGet(FLAG_SYS_GAME_CLEAR);
 
     for (i = FLAG_BADGE01_GET; i < FLAG_BADGE01_GET + NUM_BADGES; i++)
@@ -110,10 +132,10 @@ static bool8 IsGiftMonUnlocked(const struct GiftMon *giftMon)
         if (FlagGet(i))
             badges++;
     }
-    return badges >= giftMon->unlock;
+    return badges >= unlock;
 }
 
-// Special: VAR_RESULT = number of Pokémon the player can currently buy
+// Special: VAR_RESULT = number of Pokémon and items the player can currently buy
 void CountUnlockedGiftMons(void)
 {
     u32 i;
@@ -121,34 +143,49 @@ void CountUnlockedGiftMons(void)
     gSpecialVar_Result = 0;
     for (i = 0; i < ARRAY_COUNT(sGiftMons); i++)
     {
-        if (IsGiftMonUnlocked(&sGiftMons[i]))
+        if (IsUnlocked(sGiftMons[i].unlock))
+            gSpecialVar_Result++;
+    }
+    for (i = 0; i < ARRAY_COUNT(sGiftItems); i++)
+    {
+        if (IsUnlocked(sGiftItems[i].unlock))
             gSpecialVar_Result++;
     }
 }
 
-// Special: show the list of unlocked Pokémon; VAR_RESULT = the chosen entry,
-// or MULTI_B_PRESSED. Use waitstate after it.
+// Special: show the list of unlocked Pokémon, then items; VAR_RESULT = the
+// chosen entry, or MULTI_B_PRESSED. Use waitstate after it.
 void ShowGiftMonTerminalMenu(void)
 {
-    struct MonShopEntry entries[ARRAY_COUNT(sGiftMons)];
+    struct ShopListEntry entries[ARRAY_COUNT(sGiftMons) + ARRAY_COUNT(sGiftItems)];
     u32 i, count = 0;
 
     for (i = 0; i < ARRAY_COUNT(sGiftMons); i++)
     {
-        if (IsGiftMonUnlocked(&sGiftMons[i]))
+        if (IsUnlocked(sGiftMons[i].unlock))
         {
-            entries[count].species = sGiftMons[i].species;
+            entries[count].name = gSpeciesNames[sGiftMons[i].species];
             entries[count].id = i;
             entries[count].price = sGiftMons[i].price;
             count++;
         }
     }
-    ShowMonShopMenu(entries, count);
+    for (i = 0; i < ARRAY_COUNT(sGiftItems); i++)
+    {
+        if (IsUnlocked(sGiftItems[i].unlock))
+        {
+            entries[count].name = GetItemName(sGiftItems[i].item);
+            entries[count].id = GIFT_ITEM_ID_START + i;
+            entries[count].price = sGiftItems[i].price;
+            count++;
+        }
+    }
+    ShowShopListMenu(entries, count);
 }
 
-// Shows a list of Pokémon with prices, plus EXIT. VAR_RESULT = the chosen
+// Shows a list of entries with prices, plus EXIT. VAR_RESULT = the chosen
 // entry's id, or MULTI_B_PRESSED. The script must waitstate after it.
-void ShowMonShopMenu(const struct MonShopEntry *entries, u32 numEntries)
+void ShowShopListMenu(const struct ShopListEntry *entries, u32 numEntries)
 {
     static const struct ScrollArrowsTemplate sArrowsTemplate = {
         .firstArrowType = SCROLL_ARROW_UP,
@@ -164,7 +201,7 @@ void ShowMonShopMenu(const struct MonShopEntry *entries, u32 numEntries)
     struct ListMenuTemplate listTemplate = {0};
     struct WindowTemplate windowTemplate;
     struct ScrollArrowsTemplate arrows = sArrowsTemplate;
-    u8 taskId = CreateTask(Task_MonShopMenu, 80);
+    u8 taskId = CreateTask(Task_ShopListMenu, 80);
     struct Task *task = &gTasks[taskId];
     u32 count;
 
@@ -174,7 +211,7 @@ void ShowMonShopMenu(const struct MonShopEntry *entries, u32 numEntries)
     for (count = 0; count < numEntries; count++)
     {
         sShopEntries[count] = entries[count];
-        sListItems[count].name = gSpeciesNames[entries[count].species];
+        sListItems[count].name = entries[count].name;
         sListItems[count].id = count;
     }
     sListItems[count].name = gText_Exit;
@@ -190,7 +227,7 @@ void ShowMonShopMenu(const struct MonShopEntry *entries, u32 numEntries)
     listTemplate.totalItems = count;
     listTemplate.maxShowed = min(count, MENU_MAX_SHOWN);
     listTemplate.windowId = task->tWindowId;
-    listTemplate.itemPrintFunc = PrintMonShopPrice;
+    listTemplate.itemPrintFunc = PrintShopListPrice;
     listTemplate.item_X = 8;
     listTemplate.upText_Y = 1;
     listTemplate.cursorPal = 2;
@@ -211,11 +248,11 @@ void ShowMonShopMenu(const struct MonShopEntry *entries, u32 numEntries)
     CopyWindowToVram(task->tWindowId, COPYWIN_FULL);
 }
 
-static void PrintMonShopPrice(u8 windowId, u32 itemId, u8 y)
+static void PrintShopListPrice(u8 windowId, u32 itemId, u8 y)
 {
     u8 price[16];
 
-    if (itemId == LIST_CANCEL)
+    if (itemId == LIST_CANCEL || sShopEntries[itemId].price == 0)
         return;
     ConvertIntToDecimalStringN(gStringVar1, sShopEntries[itemId].price, STR_CONV_MODE_LEFT_ALIGN, 6);
     StringExpandPlaceholders(price, gText_PokedollarVar1);
@@ -223,7 +260,7 @@ static void PrintMonShopPrice(u8 windowId, u32 itemId, u8 y)
                                 GetStringRightAlignXOffset(FONT_NARROW, price, MENU_PRICE_X), y, TEXT_SKIP_DRAW, NULL);
 }
 
-static void CloseMonShopMenu(u8 taskId)
+static void CloseShopListMenu(u8 taskId)
 {
     struct Task *task = &gTasks[taskId];
 
@@ -240,7 +277,7 @@ static void CloseMonShopMenu(u8 taskId)
     ScriptContext_Enable();
 }
 
-static void Task_MonShopMenu(u8 taskId)
+static void Task_ShopListMenu(u8 taskId)
 {
     s32 input = ListMenu_ProcessInput(gTasks[taskId].tListTaskId);
 
@@ -252,21 +289,35 @@ static void Task_MonShopMenu(u8 taskId)
     case LIST_CANCEL:
         gSpecialVar_Result = MULTI_B_PRESSED;
         PlaySE(SE_SELECT);
-        CloseMonShopMenu(taskId);
+        CloseShopListMenu(taskId);
         break;
     default:
         gSpecialVar_Result = sShopEntries[input].id;
         PlaySE(SE_SELECT);
-        CloseMonShopMenu(taskId);
+        CloseShopListMenu(taskId);
         break;
     }
 }
 
-// Special: VAR_0x8004 = entry; buffers STR_VAR_1 = species name,
-// STR_VAR_2 = price and STR_VAR_3 = level for the confirmation message
+// Special: VAR_0x8004 = entry; buffers STR_VAR_1 = species or item name,
+// STR_VAR_2 = price and STR_VAR_3 = level for the confirmation message.
+// VAR_RESULT = TRUE if the entry is an item.
 void BufferGiftMonInfo(void)
 {
-    const struct GiftMon *giftMon = &sGiftMons[gSpecialVar_0x8004];
+    const struct GiftMon *giftMon;
+
+    if (gSpecialVar_0x8004 >= GIFT_ITEM_ID_START)
+    {
+        const struct GiftItem *giftItem = &sGiftItems[gSpecialVar_0x8004 - GIFT_ITEM_ID_START];
+
+        CopyItemName(giftItem->item, gStringVar1);
+        ConvertIntToDecimalStringN(gStringVar2, giftItem->price, STR_CONV_MODE_LEFT_ALIGN, 6);
+        gSpecialVar_Result = TRUE;
+        return;
+    }
+
+    giftMon = &sGiftMons[gSpecialVar_0x8004];
+    gSpecialVar_Result = FALSE;
 
     StringCopy(gStringVar1, gSpeciesNames[giftMon->species]);
     ConvertIntToDecimalStringN(gStringVar2, giftMon->price, STR_CONV_MODE_LEFT_ALIGN, 6);
@@ -276,7 +327,25 @@ void BufferGiftMonInfo(void)
 // Special: VAR_0x8004 = entry; buys it. VAR_RESULT = GIFT_MON_* result
 void TryBuyGiftMon(void)
 {
-    const struct GiftMon *giftMon = &sGiftMons[gSpecialVar_0x8004];
+    const struct GiftMon *giftMon;
+
+    if (gSpecialVar_0x8004 >= GIFT_ITEM_ID_START)
+    {
+        const struct GiftItem *giftItem = &sGiftItems[gSpecialVar_0x8004 - GIFT_ITEM_ID_START];
+
+        if (!IsEnoughMoney(&gSaveBlock1Ptr->money, giftItem->price))
+            gSpecialVar_Result = GIFT_MON_NO_MONEY;
+        else if (!AddBagItem(giftItem->item, 1))
+            gSpecialVar_Result = GIFT_ITEM_BAG_FULL;
+        else
+        {
+            RemoveMoney(&gSaveBlock1Ptr->money, giftItem->price);
+            gSpecialVar_Result = GIFT_ITEM_BOUGHT;
+        }
+        return;
+    }
+
+    giftMon = &sGiftMons[gSpecialVar_0x8004];
 
     // Event Pokémon, so Mew and Deoxys obey
     gSpecialVar_Result = BuyMonForPlayer(giftMon->species, giftMon->level, giftMon->price, TRUE);

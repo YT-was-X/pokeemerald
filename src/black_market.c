@@ -126,18 +126,18 @@ static void GetTodaysStock(u8 *stock)
 // MULTI_B_PRESSED. Use waitstate after it.
 void ShowBlackMarketMenu(void)
 {
-    struct MonShopEntry entries[STOCK_SIZE];
+    struct ShopListEntry entries[STOCK_SIZE];
     u8 stock[STOCK_SIZE];
     u32 i;
 
     GetTodaysStock(stock);
     for (i = 0; i < STOCK_SIZE; i++)
     {
-        entries[i].species = sBlackMarketPool[stock[i]].species;
+        entries[i].name = gSpeciesNames[sBlackMarketPool[stock[i]].species];
         entries[i].id = stock[i];
         entries[i].price = GetBlackMarketPrice(stock[i]);
     }
-    ShowMonShopMenu(entries, STOCK_SIZE);
+    ShowShopListMenu(entries, STOCK_SIZE);
 }
 
 // Special: VAR_0x8004 = pool entry; buffers STR_VAR_1 = species name,

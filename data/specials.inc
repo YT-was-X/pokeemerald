@@ -551,3 +551,8 @@ gSpecials::
 	def_special TryBuyBlackMarketMon
 	def_special CheckBlackMarketSell
 	def_special SellBlackMarketMon
+	def_special CountFossilsInBag
+	def_special GetFirstFossilInBag
+	def_special ShowFossilChoiceMenu
+	def_special HandFossilToResearcher
+	def_special GetRevivedFossilSpecies

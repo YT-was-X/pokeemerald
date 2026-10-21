@@ -27,11 +27,14 @@ PokemonCenter_2F_EventScript_TerminalChoose::
 	goto_if_eq VAR_RESULT, MULTI_B_PRESSED, PokemonCenter_2F_EventScript_TerminalGoodbye
 	copyvar VAR_0x8004, VAR_RESULT
 	special BufferGiftMonInfo
+	goto_if_eq VAR_RESULT, TRUE, PokemonCenter_2F_EventScript_TerminalConfirmItem
 	msgbox PokemonCenter_2F_Text_ConfirmBuy, MSGBOX_YESNO
+PokemonCenter_2F_EventScript_TerminalConfirmed::
 	goto_if_eq VAR_RESULT, NO, PokemonCenter_2F_EventScript_TerminalChoose
 	special TryBuyGiftMon
 	goto_if_eq VAR_RESULT, GIFT_MON_NO_MONEY, PokemonCenter_2F_EventScript_TerminalNoMoney
 	goto_if_eq VAR_RESULT, GIFT_MON_NO_ROOM, PokemonCenter_2F_EventScript_TerminalNoRoom
+	goto_if_eq VAR_RESULT, GIFT_ITEM_BAG_FULL, PokemonCenter_2F_EventScript_TerminalBagFull
 	copyvar VAR_0x8005, VAR_RESULT
 	playse SE_SHOP
 	waitse
@@ -40,6 +43,16 @@ PokemonCenter_2F_EventScript_TerminalChoose::
 	waitfanfare
 	waitbuttonpress
 	goto_if_eq VAR_0x8005, GIFT_MON_BOUGHT_PC, PokemonCenter_2F_EventScript_TerminalSentToPC
+	goto PokemonCenter_2F_EventScript_TerminalChoose
+	end
+
+PokemonCenter_2F_EventScript_TerminalConfirmItem::
+	msgbox PokemonCenter_2F_Text_ConfirmBuyItem, MSGBOX_YESNO
+	goto PokemonCenter_2F_EventScript_TerminalConfirmed
+	end
+
+PokemonCenter_2F_EventScript_TerminalBagFull::
+	msgbox PokemonCenter_2F_Text_BagFull, MSGBOX_DEFAULT
 	goto PokemonCenter_2F_EventScript_TerminalChoose
 	end
 
@@ -197,9 +210,12 @@ PokemonCenter_2F_Text_TourCounters:
 	.string "the way to ROUTE 117.\p"
 	.string "The middle counter is mine.\n"
 	.string "It's the POKéMON GIFT TERMINAL.\p"
-	.string "You may get rare POKéMON here.\n"
-	.string "Each GYM BADGE you earn unlocks\l"
+	.string "You may get rare POKéMON and\n"
+	.string "FOSSILS here.\p"
+	.string "Each GYM BADGE you earn unlocks\n"
 	.string "more of them.\p"
+	.string "DEVON CORPORATION in RUSTBORO\n"
+	.string "can bring FOSSILS back to life.\p"
 	.string "As for the counter on the right…\p"
 	.string "Someone moved in and started\n"
 	.string "buying and selling POKéMON.\p"
@@ -215,8 +231,9 @@ PokemonCenter_2F_Text_TerminalWelcome:
 	.string "Welcome to the POKéMON GIFT\n"
 	.string "TERMINAL!\p"
 	.string "Earn GYM BADGES to unlock more\n"
-	.string "POKéMON. Become CHAMPION to\l"
-	.string "unlock the legendary POKéMON!$"
+	.string "POKéMON and FOSSILS. Become\l"
+	.string "CHAMPION to unlock the legendary\l"
+	.string "POKéMON!$"
 
 PokemonCenter_2F_Text_WhichPokemon:
 	.string "Which POKéMON would you like?$"
@@ -224,6 +241,13 @@ PokemonCenter_2F_Text_WhichPokemon:
 PokemonCenter_2F_Text_ConfirmBuy:
 	.string "A Lv. {STR_VAR_3} {STR_VAR_1} costs ¥{STR_VAR_2}.\n"
 	.string "Would you like it?$"
+
+PokemonCenter_2F_Text_ConfirmBuyItem:
+	.string "The {STR_VAR_1} costs ¥{STR_VAR_2}.\n"
+	.string "Would you like it?$"
+
+PokemonCenter_2F_Text_BagFull:
+	.string "Sorry, your BAG is full.$"
 
 PokemonCenter_2F_Text_ReceivedMon:
 	.string "{PLAYER} received {STR_VAR_1}!$"

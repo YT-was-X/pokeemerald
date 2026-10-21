@@ -6,5 +6,7 @@
 #define GIFT_MON_BOUGHT_PC    1
 #define GIFT_MON_NO_MONEY     2
 #define GIFT_MON_NO_ROOM      3
+#define GIFT_ITEM_BOUGHT      4
+#define GIFT_ITEM_BAG_FULL    5
 
 #endif // GUARD_CONSTANTS_GIFT_MON_TERMINAL_H
