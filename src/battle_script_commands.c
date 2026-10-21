@@ -9900,6 +9900,39 @@ static void Cmd_removelightscreenreflect(void)
     gBattlescriptCurrInstr++;
 }
 
+// Nest Ball reference level: the next gym leader's strongest Pokémon by badge count
+// (8 badges = Wallace's ace; Champion = NEST_BALL_LEVEL_CHAMPION)
+static const u8 sNestBallLevelByBadges[NUM_BADGES + 1] = {15, 19, 24, 29, 31, 33, 42, 46, 58};
+#define NEST_BALL_LEVEL_CHAMPION 70
+#define NEST_BALL_MIN            15 // 1.5x at or above the reference level
+#define NEST_BALL_MAX            40 // 4x
+#define NEST_BALL_PER_LEVEL      2  // +0.2x per level below it
+
+// Returns the Nest Ball multiplier in tenths (vanilla: (40 - level) / 10, minimum 1x)
+static u8 GetNestBallMultiplier(u8 level)
+{
+    s32 i, refLevel, multiplier;
+    u8 badges = 0;
+
+    for (i = FLAG_BADGE01_GET; i < FLAG_BADGE01_GET + NUM_BADGES; i++)
+    {
+        if (FlagGet(i))
+            badges++;
+    }
+
+    if (FlagGet(FLAG_SYS_GAME_CLEAR))
+        refLevel = NEST_BALL_LEVEL_CHAMPION;
+    else
+        refLevel = sNestBallLevelByBadges[badges];
+
+    multiplier = NEST_BALL_MIN + NEST_BALL_PER_LEVEL * (refLevel - level);
+    if (multiplier < NEST_BALL_MIN)
+        multiplier = NEST_BALL_MIN;
+    if (multiplier > NEST_BALL_MAX)
+        multiplier = NEST_BALL_MAX;
+    return multiplier;
+}
+
 static void Cmd_handleballthrow(void)
 {
     u8 ballMultiplier = 0;
@@ -9956,16 +9989,7 @@ static void Cmd_handleballthrow(void)
                     ballMultiplier = 10;
                 break;
             case ITEM_NEST_BALL:
-                if (gBattleMons[gBattlerTarget].level < 40)
-                {
-                    ballMultiplier = 40 - gBattleMons[gBattlerTarget].level;
-                    if (ballMultiplier <= 9)
-                        ballMultiplier = 10;
-                }
-                else
-                {
-                    ballMultiplier = 10;
-                }
+                ballMultiplier = GetNestBallMultiplier(gBattleMons[gBattlerTarget].level);
                 break;
             case ITEM_REPEAT_BALL:
                 if (GetSetPokedexFlag(SpeciesToNationalPokedexNum(gBattleMons[gBattlerTarget].species), FLAG_GET_CAUGHT))
