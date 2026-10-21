@@ -1,4 +1,5 @@
 #include "global.h"
+#include "minigame_solo.h"
 #include "m4a.h"
 #include "malloc.h"
 #include "reload_save.h"
@@ -751,6 +752,8 @@ void ClearLinkCallback_2(void)
 
 u8 GetLinkPlayerCount(void)
 {
+    if (IsSoloMinigame())
+        return gSoloMinigamePlayers;
     if (gWirelessCommType)
         return Rfu_GetLinkPlayerCount();
 
@@ -1021,6 +1024,8 @@ static void UNUSED SendBerryBlenderNoSpaceForPokeblocks(void)
 
 u8 GetMultiplayerId(void)
 {
+    if (IsSoloMinigame())
+        return 0;
     if (gWirelessCommType == TRUE)
         return Rfu_GetMultiplayerId();
 
@@ -1035,8 +1040,24 @@ u8 BitmaskAllOtherLinkPlayers(void)
     return ((1 << MAX_LINK_PLAYERS) - 1) ^ (1 << mpId);
 }
 
+// Solo minigames: which players' blocks count as received
+static EWRAM_DATA u8 sSoloBlockReceivedStatus = 0;
+
 bool8 SendBlock(u8 unused, const void *src, u16 size)
 {
+    if (IsSoloMinigame())
+    {
+        // Every player "receives" the same block, so the computer
+        // players echo what the player sent (e.g. their play-again choice)
+        int i;
+
+        if (size > BLOCK_BUFFER_SIZE)
+            size = BLOCK_BUFFER_SIZE;
+        for (i = 0; i < gSoloMinigamePlayers; i++)
+            memcpy(gBlockRecvBuffer[i], src, size);
+        sSoloBlockReceivedStatus = (1 << gSoloMinigamePlayers) - 1;
+        return TRUE;
+    }
     if (gWirelessCommType == TRUE)
         return Rfu_InitBlockSend(src, size);
 
@@ -1059,6 +1080,8 @@ bool8 SendBlockRequest(u8 blockReqType)
 
 bool8 IsLinkTaskFinished(void)
 {
+    if (IsSoloMinigame())
+        return TRUE;
     if (gWirelessCommType == TRUE)
         return IsLinkRfuTaskFinished();
 
@@ -1067,6 +1090,8 @@ bool8 IsLinkTaskFinished(void)
 
 u8 GetBlockReceivedStatus(void)
 {
+    if (IsSoloMinigame())
+        return sSoloBlockReceivedStatus;
     if (gWirelessCommType == TRUE)
         return Rfu_GetBlockReceivedStatus();
 
@@ -1085,7 +1110,9 @@ void ResetBlockReceivedFlags(void)
 {
     int i;
 
-    if (gWirelessCommType == TRUE)
+    if (IsSoloMinigame())
+        sSoloBlockReceivedStatus = 0;
+    else if (gWirelessCommType == TRUE)
     {
         for (i = 0; i < MAX_RFU_PLAYERS; i++)
             Rfu_ResetBlockReceivedFlag(i);
@@ -1099,7 +1126,9 @@ void ResetBlockReceivedFlags(void)
 
 void ResetBlockReceivedFlag(u8 who)
 {
-    if (gWirelessCommType == TRUE)
+    if (IsSoloMinigame())
+        sSoloBlockReceivedStatus &= ~(1 << who);
+    else if (gWirelessCommType == TRUE)
     {
         Rfu_ResetBlockReceivedFlag(who);
     }
@@ -1268,6 +1297,9 @@ u8 GetLinkPlayerCountAsBitFlags(void)
     int i;
     u8 flags;
 
+    if (IsSoloMinigame())
+        return (1 << gSoloMinigamePlayers) - 1;
+
     flags = 0;
     for (i = 0; i < GetLinkPlayerCount(); i++)
         flags |= (1 << i);
@@ -1400,6 +1432,8 @@ void SetCloseLinkCallbackAndType(u16 type)
 
 void SetCloseLinkCallback(void)
 {
+    if (IsSoloMinigame())
+        return;
     if (gWirelessCommType == TRUE)
     {
         Rfu_SetCloseLinkCallback();
@@ -1517,6 +1551,8 @@ static void LinkCB_WaitCloseLinkWithJP(void)
 
 void SetLinkStandbyCallback(void)
 {
+    if (IsSoloMinigame())
+        return;
     if (gWirelessCommType == TRUE)
     {
         Rfu_SetLinkStandbyCallback();

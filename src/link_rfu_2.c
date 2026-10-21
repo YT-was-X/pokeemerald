@@ -1,4 +1,5 @@
 #include "global.h"
+#include "minigame_solo.h"
 #include "malloc.h"
 #include "battle.h"
 #include "berry_blender.h"
@@ -1279,6 +1280,8 @@ static void RfuPrepareSendBuffer(u16 command)
 
 void Rfu_SendPacket(void *data)
 {
+    if (IsSoloMinigame())
+        return;
     if (gSendCmd[0] == 0 && !RfuHasErrored())
     {
         memcpy(gRfu.packet, data, sizeof(gRfu.packet));
@@ -1553,6 +1556,8 @@ static void Rfu_LinkStandby(void)
 
 void Rfu_SetLinkStandbyCallback(void)
 {
+    if (IsSoloMinigame())
+        return;
     if (gRfu.callback == NULL)
     {
         gRfu.callback = Rfu_LinkStandby;

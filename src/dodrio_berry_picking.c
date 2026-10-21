@@ -9,6 +9,7 @@
 #include "item.h"
 #include "link.h"
 #include "link_rfu.h"
+#include "minigame_solo.h"
 #include "m4a.h"
 #include "palette.h"
 #include "minigame_countdown.h"
@@ -272,7 +273,8 @@ struct DodrioGame
     /*0x31A0*/ struct DodrioGame_Player players[MAX_RFU_PLAYERS];
     /*0x32CC*/ struct DodrioGame_Player player;
     /*0x3308*/ struct DodrioGame_ScoreResults scoreResults[MAX_RFU_PLAYERS];
-}; // size = 0x3330
+    bool8 cpuIgnoresBerry[NUM_BERRY_COLUMNS]; // Solo play: computer players let this berry drop
+}; // size = 0x3330 in vanilla
 
 EWRAM_DATA static struct DodrioGame *sGame = NULL;
 EWRAM_DATA static u16 *sDodrioSpriteIds[MAX_RFU_PLAYERS] = {NULL};
@@ -660,7 +662,7 @@ void StartDodrioBerryPicking(u16 partyId, MainCallback exitCallback)
 {
     sExitingGame = FALSE;
 
-    if (gReceivedRemoteLinkPlayers && (sGame = AllocZeroed(sizeof(*sGame))))
+    if ((gReceivedRemoteLinkPlayers || IsSoloMinigame()) && (sGame = AllocZeroed(sizeof(*sGame))))
     {
         ResetTasksAndSprites();
         InitDodrioGame(sGame);
@@ -678,6 +680,7 @@ void StartDodrioBerryPicking(u16 partyId, MainCallback exitCallback)
     else
     {
         // Exit - Alloc failed, or players not connected
+        EndSoloMinigame();
         SetMainCallback2(exitCallback);
         return;
     }
@@ -1267,7 +1270,8 @@ static void AskPlayAgain(void)
             {
                 if (sGame->playAgainStates[i] == PLAY_AGAIN_NO)
                 {
-                    SetGameFunc(FUNC_END_LINK);
+                    // No link to close in solo play
+                    SetGameFunc(IsSoloMinigame() ? FUNC_EXIT : FUNC_END_LINK);
                     return;
                 }
             }
@@ -1328,6 +1332,7 @@ static void ExitGame(void)
     default:
         if (!IsGfxFuncActive())
         {
+            EndSoloMinigame();
             SetMainCallback2(sGame->exitCallback);
             DestroyTask(sGame->taskId);
             Free(sGame);
@@ -1388,7 +1393,7 @@ static void ResetGame(void)
         CreateDodrioGameTask(Task_NewGameIntro);
         ResetGfxState();
         InitDodrioGame(sGame);
-        if (gReceivedRemoteLinkPlayers == 0)
+        if (gReceivedRemoteLinkPlayers == 0 && !IsSoloMinigame())
             sGame->numPlayers = 1;
 
         SetRandomPrize();
@@ -1452,6 +1457,9 @@ static void Task_CommunicateMonInfo(u8 taskId)
                 *(u8 *)&sGame->monInfo[i] = *(u8 *)gBlockRecvBuffer[i];
                 sGame->playersReceived = sGame->numPlayers;
             }
+            // In solo play the block is the player's own, echoed for everyone
+            for (i = 1; IsSoloMinigame() && i < sGame->numPlayers; i++)
+                sGame->monInfo[i].isShiny = FALSE;
         }
         if (sGame->playersReceived >= sGame->numPlayers)
         {
@@ -2698,7 +2706,7 @@ static u8 GetNumPlayers(void)
 
 static u8 *GetPlayerName(u8 id)
 {
-    if (gReceivedRemoteLinkPlayers)
+    if (gReceivedRemoteLinkPlayers || IsSoloMinigame())
         return gLinkPlayers[id].name;
     else
         return sGame->players[id].name;
@@ -3093,6 +3101,54 @@ struct ReadyToStartPacket
     bool8 ALIGNED(4) ready;
 };
 
+// Solo play: a computer player reaches for a berry that's in range in one of its
+// columns. It leaves the columns it shares with the player to the player, so the
+// player can win the prize, and lets CPU_MISS_CHANCE of its berries drop.
+#define CPU_MISS_CHANCE 25 // 1 in this many berries
+
+static bool32 IsPlayerColumn(u8 column)
+{
+    u32 i;
+
+    for (i = 0; i < ARRAY_COUNT(sDodrioHeadToColumnMap[0][0]); i++)
+    {
+        if (sDodrioHeadToColumnMap[sGame->numPlayers - 1][0][i] == column)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static bool32 GetCpuPickState(u8 playerId, u8 *pickState)
+{
+    static const u8 sHeadPickStates[] = {PICK_LEFT, PICK_MIDDLE, PICK_RIGHT};
+    u32 head;
+
+    if (sGame->numGraySquares >= NUM_STATUS_SQUARES)
+        return FALSE;
+
+    for (head = 0; head < ARRAY_COUNT(sHeadPickStates); head++)
+    {
+        u8 column = sDodrioHeadToColumnMap[sGame->numPlayers - 1][playerId][head];
+        u8 fallDist = sGame->player.berries.fallDist[column];
+
+        if (IsPlayerColumn(column) || sGame->berryState[column] != BERRYSTATE_NONE)
+            continue;
+
+        // Decide once per berry, as it comes into range, whether to catch it
+        if (fallDist == EAT_FALL_DIST - 1 && sGame->fallTimer[column] == 0)
+            sGame->cpuIgnoresBerry[column] = (Random() % CPU_MISS_CHANCE == 0);
+        if (sGame->cpuIgnoresBerry[column])
+            continue;
+
+        if (fallDist == EAT_FALL_DIST - 1 || fallDist == EAT_FALL_DIST)
+        {
+            *pickState = sHeadPickStates[head];
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 static void SendPacket_ReadyToStart(bool32 ready)
 {
     struct ReadyToStartPacket packet;
@@ -3104,6 +3160,9 @@ static void SendPacket_ReadyToStart(bool32 ready)
 static u32 RecvPacket_ReadyToStart(u32 playerId)
 {
     struct ReadyToStartPacket *packet;
+
+    if (IsSoloMinigame())
+        return TRUE;
 
     if ((gRecvCmds[0][0] & RFUCMD_MASK) != RFUCMD_SEND_PACKET)
         return FALSE;
@@ -3232,6 +3291,22 @@ static bool32 RecvPacket_GameState(u32 playerId,
     struct GameStatePacket *packet;
     struct DodrioGame_Berries *berries = &player->berries;
 
+    if (IsSoloMinigame())
+    {
+        // The leader reads its own state back for drawing; in solo play there's
+        // no link to echo it, so copy the berries directly. The rest is unchanged.
+        u32 i;
+
+        for (i = 0; i < NUM_BERRY_COLUMNS - 1; i++)
+        {
+            berries->fallDist[i] = sGame->player.berries.fallDist[i];
+            berries->ids[i] = sGame->player.berries.ids[i];
+        }
+        berries->fallDist[NUM_BERRY_COLUMNS - 1] = berries->fallDist[0];
+        berries->ids[NUM_BERRY_COLUMNS - 1] = berries->ids[0];
+        return TRUE;
+    }
+
     if ((gRecvCmds[0][0] & RFUCMD_MASK) != RFUCMD_SEND_PACKET)
         return FALSE;
 
@@ -3309,6 +3384,9 @@ static bool32 RecvPacket_PickState(u32 playerId, u8 *pickState)
 {
     struct PickStatePacket *packet;
 
+    if (IsSoloMinigame())
+        return GetCpuPickState(playerId, pickState);
+
     if ((gRecvCmds[0][0] & RFUCMD_MASK) != RFUCMD_SEND_PACKET)
         return FALSE;
 
@@ -3339,6 +3417,9 @@ static void SendPacket_ReadyToEnd(bool32 ready)
 static bool32 RecvPacket_ReadyToEnd(u32 playerId)
 {
     struct ReadyToEndPacket *packet;
+
+    if (IsSoloMinigame())
+        return !sGame->berriesFalling;
 
     if ((gRecvCmds[0][0] & RFUCMD_MASK) != RFUCMD_SEND_PACKET)
         return FALSE;
@@ -5030,7 +5111,9 @@ static void Msg_SavingDontTurnOff(void)
     case 2:
         if (!IsDma3ManagerBusyWithBgCopy())
         {
-            CreateTask(Task_LinkFullSave, 0);
+            // No link save in solo play; records are saved with the next normal save
+            if (!IsSoloMinigame())
+                CreateTask(Task_LinkFullSave, 0);
             sGfx->state++;
         }
         break;
