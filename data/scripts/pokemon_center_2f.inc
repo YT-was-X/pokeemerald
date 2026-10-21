@@ -1,15 +1,19 @@
 @ Poké Center 2F services: Day Care counter (left), gift terminal (middle), black market grunt (right)
 
 @ Day Care counter: the same Day Care as Route 117, without the trip
-PokemonCenter_2F_EventScript_DaycareCounter::
+@ Day Care lady: leave and pick up POKéMON (Route 117 Day Care inside)
+PokemonCenter_2F_EventScript_DaycareLady::
 	setvar VAR_TEMP_F, DAYCARE_COUNTER_REMOTE
 	lock
 	faceplayer
 	msgbox PokemonCenter_2F_Text_DaycareCounterWelcome, MSGBOX_DEFAULT
 	special GetDaycareMonNicknames
-	specialvar VAR_RESULT, GetDaycareState
-	goto_if_eq VAR_RESULT, DAYCARE_EGG_WAITING, Route117_EventScript_DaycareEggWaiting
 	goto Route117_PokemonDayCare_EventScript_DaycareWoman
+	end
+
+@ Day Care man: EGGS and how the POKéMON are doing (Route 117 Day Care outside)
+PokemonCenter_2F_EventScript_DaycareMan::
+	goto Route117_EventScript_DaycareMan
 	end
 
 @ Gift Pokémon terminal
@@ -281,9 +285,11 @@ PokemonCenter_2F_Text_TourCounters:
 	.string "The counter on the left is linked\n"
 	.string "to the POKéMON DAY CARE on\l"
 	.string "ROUTE 117.\p"
-	.string "You may leave POKéMON there and\n"
-	.string "pick up EGGS without going all\l"
-	.string "the way to ROUTE 117.\p"
+	.string "The DAY-CARE LADY will raise your\n"
+	.string "POKéMON, and the DAY-CARE MAN will\l"
+	.string "give you any EGGS they find.\p"
+	.string "There's no need to go all the way\n"
+	.string "to ROUTE 117.\p"
 	.string "The middle counter is mine.\n"
 	.string "It's the POKéMON GIFT TERMINAL.\p"
 	.string "You may get rare POKéMON and\n"
