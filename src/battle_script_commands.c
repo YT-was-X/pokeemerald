@@ -3397,8 +3397,10 @@ static void Cmd_getexp(void)
             }
             else
             {
-                // music change in wild battle after fainting a poke
-                if (!(gBattleTypeFlags & BATTLE_TYPE_TRAINER) && gBattleMons[0].hp != 0 && !gBattleStruct->wildVictorySong)
+                // music change in wild battle after fainting a poke (not after catching it,
+                // which already plays the caught fanfare)
+                if (!(gBattleTypeFlags & BATTLE_TYPE_TRAINER) && gBattleMons[0].hp != 0 && !gBattleStruct->wildVictorySong
+                 && gBattleMons[gBattlerFainted].hp == 0)
                 {
                     BattleStopLowHpSound();
                     PlayBGM(MUS_VICTORY_WILD);
