@@ -269,7 +269,6 @@ MauvilleCity_GameCorner_EventScript_PrizeConfirmed::
 	case PRIZE_BAG_FULL, MauvilleCity_GameCorner_EventScript_NoRoomForTM
 	case PRIZE_NO_ROOM_FOR_MON, MauvilleCity_GameCorner_EventScript_NoRoomForPrizeMon
 	copyvar VAR_0x8006, VAR_RESULT
-	updatecoinsbox 21, 1
 	playse SE_SHOP
 	waitse
 	goto_if_eq VAR_0x8006, PRIZE_BOUGHT_ITEM, MauvilleCity_GameCorner_EventScript_GotItemPrize
@@ -279,10 +278,13 @@ MauvilleCity_GameCorner_EventScript_PrizeConfirmed::
 	waitfanfare
 	waitbuttonpress
 	call_if_eq VAR_0x8006, PRIZE_BOUGHT_MON_PC, MauvilleCity_GameCorner_EventScript_PrizeMonSentToPC
+	@ Updated after the messages, which use STR_VAR_1 (the coins box overwrites it)
+	updatecoinsbox 21, 1
 	goto MauvilleCity_GameCorner_EventScript_ChoosePrize
 	end
 
 MauvilleCity_GameCorner_EventScript_GotItemPrize::
+	updatecoinsbox 21, 1
 	msgbox MauvilleCity_GameCorner_Text_HereYouGo, MSGBOX_DEFAULT
 	goto MauvilleCity_GameCorner_EventScript_ChoosePrize
 	end
