@@ -215,11 +215,11 @@ CableClub_EventScript_PlayerExitLinkRoom::
 CableClub_EventScript_Tutorial::
 	lockall
 	applywaitmovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterUp
-	msgbox CableClub_Text_FirstTimeRightThisWay, MSGBOX_DEFAULT
+	msgbox PokemonCenter_2F_Text_TourIntro, MSGBOX_DEFAULT
 	closemessage
 	applywaitmovement LOCALID_PLAYER, CableClub_Movement_PlayerApproachCounter
 	delay 30
-	msgbox CableClub_Text_ExplainWirelessClubFirstTime, MSGBOX_DEFAULT
+	msgbox PokemonCenter_2F_Text_TourCounters, MSGBOX_DEFAULT
 	setvar VAR_CABLE_CLUB_TUTORIAL_STATE, 2
 	releaseall
 	end

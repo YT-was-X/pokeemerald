@@ -176,6 +176,37 @@ PokemonCenter_2F_EventScript_GruntCantSellBagFull::
 	goto PokemonCenter_2F_EventScript_GruntSell
 	end
 
+@ First-visit tour (CableClub_EventScript_Tutorial), given by TEALA at the gift terminal
+PokemonCenter_2F_Text_TourIntro:
+	.string "Hello!\n"
+	.string "My name is TEALA.\p"
+	.string "This must be your first time\n"
+	.string "up here.\p"
+	.string "Let me show you what this floor\n"
+	.string "of our POKéMON CENTER offers.\p"
+	.string "Right this way, please.$"
+
+PokemonCenter_2F_Text_TourCounters:
+	.string "There are three counters on this\n"
+	.string "floor.\p"
+	.string "The counter on the left is linked\n"
+	.string "to the POKéMON DAY CARE on\l"
+	.string "ROUTE 117.\p"
+	.string "You may leave POKéMON there and\n"
+	.string "pick up EGGS without going all\l"
+	.string "the way to ROUTE 117.\p"
+	.string "The middle counter is mine.\n"
+	.string "It's the POKéMON GIFT TERMINAL.\p"
+	.string "You may get rare POKéMON here.\n"
+	.string "Each GYM BADGE you earn unlocks\l"
+	.string "more of them.\p"
+	.string "As for the counter on the right…\p"
+	.string "Someone moved in and started\n"
+	.string "buying and selling POKéMON.\p"
+	.string "The POKéMON CENTER can't say\n"
+	.string "where they come from…\p"
+	.string "Please be careful over there.$"
+
 PokemonCenter_2F_Text_DaycareCounterWelcome:
 	.string "Hello! This counter is linked to the\n"
 	.string "POKéMON DAY CARE on ROUTE 117.$"
