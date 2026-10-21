@@ -1564,3 +1564,33 @@ static const u8 sIncubatorDesc[] = _(
     "Keeps EGGS warm.\n"
     "EGGS in the party\n"
     "hatch twice as fast.");
+
+static const u8 sPowerWeightDesc[] = _(
+    "Held in the DAY CARE,\n"
+    "it passes its HP\n"
+    "IV on to the EGG.");
+
+static const u8 sPowerBracerDesc[] = _(
+    "Held in the DAY CARE,\n"
+    "it passes its ATTACK\n"
+    "IV on to the EGG.");
+
+static const u8 sPowerBeltDesc[] = _(
+    "Held in the DAY CARE,\n"
+    "it passes its DEFENSE\n"
+    "IV on to the EGG.");
+
+static const u8 sPowerAnkletDesc[] = _(
+    "Held in the DAY CARE,\n"
+    "it passes its SPEED\n"
+    "IV on to the EGG.");
+
+static const u8 sPowerLensDesc[] = _(
+    "Held in the DAY CARE,\n"
+    "it passes its SP. ATK\n"
+    "IV on to the EGG.");
+
+static const u8 sPowerBandDesc[] = _(
+    "Held in the DAY CARE,\n"
+    "it passes its SP. DEF\n"
+    "IV on to the EGG.");

@@ -740,3 +740,9 @@ const u32 gItemIconPalette_OldSeaMap[] = INCGFX_U32("graphics/items/icon_palette
 // Shiny Charm: Star Piece icon recolored gold
 const u32 gItemIconPalette_ShinyCharm[] = INCGFX_U32("graphics/items/icon_palettes/shiny_charm.pal", ".gbapal.lz");
 const u32 gItemIconPalette_Incubator[] = INCGFX_U32("graphics/items/icon_palettes/incubator.pal", ".gbapal.lz");
+const u32 gItemIconPalette_PowerWeight[] = INCGFX_U32("graphics/items/icon_palettes/power_weight.pal", ".gbapal.lz");
+const u32 gItemIconPalette_PowerBracer[] = INCGFX_U32("graphics/items/icon_palettes/power_bracer.pal", ".gbapal.lz");
+const u32 gItemIconPalette_PowerBelt[] = INCGFX_U32("graphics/items/icon_palettes/power_belt.pal", ".gbapal.lz");
+const u32 gItemIconPalette_PowerAnklet[] = INCGFX_U32("graphics/items/icon_palettes/power_anklet.pal", ".gbapal.lz");
+const u32 gItemIconPalette_PowerLens[] = INCGFX_U32("graphics/items/icon_palettes/power_lens.pal", ".gbapal.lz");
+const u32 gItemIconPalette_PowerBand[] = INCGFX_U32("graphics/items/icon_palettes/power_band.pal", ".gbapal.lz");

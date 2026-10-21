@@ -568,3 +568,4 @@ gSpecials::
 	def_special BufferTrainingCampInfo
 	def_special BufferTrainingCampFee
 	def_special TakeMonFromTrainingCamp
+	def_special GivePowerItemsToPlayer

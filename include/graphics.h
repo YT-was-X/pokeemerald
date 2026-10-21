@@ -3852,6 +3852,12 @@ extern const u32 gItemIcon_OldSeaMap[];
 extern const u32 gItemIconPalette_OldSeaMap[];
 extern const u32 gItemIconPalette_ShinyCharm[];
 extern const u32 gItemIconPalette_Incubator[];
+extern const u32 gItemIconPalette_PowerWeight[];
+extern const u32 gItemIconPalette_PowerBracer[];
+extern const u32 gItemIconPalette_PowerBelt[];
+extern const u32 gItemIconPalette_PowerAnklet[];
+extern const u32 gItemIconPalette_PowerLens[];
+extern const u32 gItemIconPalette_PowerBand[];
 
 extern const u32 gItemIcon_ReturnToFieldArrow[];
 extern const u32 gItemIconPalette_ReturnToFieldArrow[];

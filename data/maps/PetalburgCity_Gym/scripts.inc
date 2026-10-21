@@ -87,9 +87,29 @@ PetalburgCity_Gym_EventScript_ReturnFromWallyTutorial::
 	delay 30
 	applywaitmovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterUp
 	msgbox PetalburgCity_Gym_Text_DadGoCollectBadges, MSGBOX_DEFAULT
+	call PetalburgCity_Gym_EventScript_TryGivePowerItems
 	setvar VAR_PETALBURG_GYM_STATE, 2
 	releaseall
 	end
+
+@ Norman's gift for helping Wally: the six Power items (breeding, src/daycare.c)
+PetalburgCity_Gym_EventScript_TryGivePowerItems::
+	goto_if_set FLAG_RECEIVED_POWER_ITEMS, PetalburgCity_Gym_EventScript_PowerItemsReturn
+	msgbox PetalburgCity_Gym_Text_DadPowerItems, MSGBOX_DEFAULT
+	specialvar VAR_RESULT, GivePowerItemsToPlayer
+	goto_if_eq VAR_RESULT, FALSE, PetalburgCity_Gym_EventScript_PowerItemsNoRoom
+	setflag FLAG_RECEIVED_POWER_ITEMS
+	message PetalburgCity_Gym_Text_ReceivedPowerItems
+	playfanfare MUS_OBTAIN_ITEM
+	waitfanfare
+	waitbuttonpress
+	msgbox PetalburgCity_Gym_Text_DadExplainPowerItems, MSGBOX_DEFAULT
+PetalburgCity_Gym_EventScript_PowerItemsReturn::
+	return
+
+PetalburgCity_Gym_EventScript_PowerItemsNoRoom::
+	msgbox PetalburgCity_Gym_Text_DadPowerItemsNoRoom, MSGBOX_DEFAULT
+	return
 
 PetalburgCity_Gym_Movement_WallyExitGym:
 	walk_down
@@ -101,6 +121,8 @@ PetalburgCity_Gym_Movement_WallyExitGym:
 PetalburgCity_Gym_EventScript_Norman::
 	lock
 	faceplayer
+	@ Saves past the Wally tutorial before the Power items existed get them here
+	call_if_ge VAR_PETALBURG_GYM_STATE, 2, PetalburgCity_Gym_EventScript_TryGivePowerItems
 	switch VAR_PETALBURG_GYM_STATE
 	case 2, PetalburgCity_Gym_EventScript_NormanNoBadges
 	case 3, PetalburgCity_Gym_EventScript_NormanOneBadge
@@ -1569,3 +1591,25 @@ PetalburgCity_Gym_Text_NormanRematchNeedTwoMons:
 	.string "Sorry, but you'll have to come back\n"
 	.string "with at least two POKéMON.$"
 
+PetalburgCity_Gym_Text_DadPowerItems:
+	.string "DAD: Thank you for helping WALLY.\n"
+	.string "Here, I want you to have these.$"
+
+PetalburgCity_Gym_Text_ReceivedPowerItems:
+	.string "{PLAYER} received six POWER items\n"
+	.string "from DAD!$"
+
+PetalburgCity_Gym_Text_DadExplainPowerItems:
+	.string "DAD: When you leave a POKéMON at\n"
+	.string "the DAY CARE holding one of those,\l"
+	.string "its EGG gets that POKéMON's IV for\l"
+	.string "that stat.\p"
+	.string "The POWER WEIGHT is for HP, the\n"
+	.string "BRACER for ATTACK, the BELT for\l"
+	.string "DEFENSE and the ANKLET for SPEED.\p"
+	.string "The LENS is for SP. ATK and the\n"
+	.string "BAND for SP. DEF.$"
+
+PetalburgCity_Gym_Text_DadPowerItemsNoRoom:
+	.string "DAD: Hm, your BAG is full.\n"
+	.string "Make some room and come see me.$"

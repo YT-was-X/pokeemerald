@@ -500,27 +500,6 @@ static void UNUSED TriggerPendingDaycareMaleEgg(void)
     _TriggerPendingDaycareMaleEgg(&gSaveBlock1Ptr->daycare);
 }
 
-// Removes the selected index from the given IV list and shifts the remaining
-// elements to the left.
-static void RemoveIVIndexFromList(u8 *ivs, u8 selectedIv)
-{
-    s32 i, j;
-    u8 temp[NUM_STATS];
-
-    ivs[selectedIv] = 0xFF;
-    for (i = 0; i < NUM_STATS; i++)
-    {
-        temp[i] = ivs[i];
-    }
-
-    j = 0;
-    for (i = 0; i < NUM_STATS; i++)
-    {
-        if (temp[i] != 0xFF)
-            ivs[j++] = temp[i];
-    }
-}
-
 // Each full EV_IV_BONUS_TIER EVs a parent has in an inherited stat (up to 3 tiers at 252+)
 // add a random 1 to <tiers> to the egg's IV in that stat, capped at 31
 #define EV_IV_BONUS_TIER     84
@@ -537,51 +516,54 @@ static u8 GetEvTrainingIVBonus(u8 ev)
     return 1 + Random() % tiers;
 }
 
+static void InheritIV(struct Pokemon *egg, struct BoxPokemon *parent, u8 stat)
+{
+    // The IV and EV fields are both in HP, ATK, DEF, SPEED, SPATK, SPDEF order.
+    // The inherited IV is boosted by the parent's EVs in that stat.
+    u8 iv = GetBoxMonData(parent, MON_DATA_HP_IV + stat);
+    iv += GetEvTrainingIVBonus(GetBoxMonData(parent, MON_DATA_HP_EV + stat));
+    if (iv > MAX_PER_STAT_IVS)
+        iv = MAX_PER_STAT_IVS;
+    SetMonData(egg, MON_DATA_HP_IV + stat, &iv);
+}
+
 static void InheritIVs(struct Pokemon *egg, struct DayCare *daycare)
 {
-    u8 i;
-    u8 selectedIvs[INHERITED_IV_COUNT];
+    u8 i, numAvailable, parent;
     u8 availableIVs[NUM_STATS];
-    u8 whichParents[INHERITED_IV_COUNT];
-    u8 iv;
+    s8 powerItemParent[NUM_STATS];
 
-    // Initialize a list of IV indices.
+    // A parent holding a Power item always passes on that item's stat, on top of the
+    // usual 3. If both hold the item for the same stat, a random one passes it on.
+    for (i = 0; i < NUM_STATS; i++)
+        powerItemParent[i] = -1;
+    for (parent = 0; parent < DAYCARE_MON_COUNT; parent++)
+    {
+        u16 item = GetBoxMonData(&daycare->mons[parent].mon, MON_DATA_HELD_ITEM);
+        if (item >= FIRST_POWER_ITEM && item <= LAST_POWER_ITEM)
+        {
+            u8 stat = item - FIRST_POWER_ITEM;
+            if (powerItemParent[stat] < 0 || (Random() % 2))
+                powerItemParent[stat] = parent;
+        }
+    }
+
+    // List the stats not already passed on by a Power item.
+    numAvailable = 0;
     for (i = 0; i < NUM_STATS; i++)
     {
-        availableIVs[i] = i;
+        if (powerItemParent[i] >= 0)
+            InheritIV(egg, &daycare->mons[powerItemParent[i]].mon, i);
+        else
+            availableIVs[numAvailable++] = i;
     }
 
-    // Select the 3 IVs that will be inherited.
-    for (i = 0; i < INHERITED_IV_COUNT; i++)
+    // Pick the usual 3 from the rest, each from a random parent.
+    for (i = 0; i < INHERITED_IV_COUNT && numAvailable != 0; i++)
     {
-        // Randomly pick an IV from the available list and stop from being chosen again.
-        // BUG: Instead of removing the IV that was just picked, this
-        // removes position 0 (HP) then position 1 (DEF), then position 2. This is why HP and DEF
-        // have a lower chance to be inherited in Emerald and why the IV picked for inheritance can
-        // be repeated. Amusingly, FRLG and RS also got this wrong. They remove selectedIvs[i], which
-        // is not an index! This means that it can sometimes remove the wrong stat.
-        u8 index = Random() % (NUM_STATS - i);
-        selectedIvs[i] = availableIVs[index];
-        RemoveIVIndexFromList(availableIVs, index);
-    }
-
-    // Determine which parent each of the selected IVs should inherit from.
-    for (i = 0; i < INHERITED_IV_COUNT; i++)
-    {
-        whichParents[i] = Random() % DAYCARE_MON_COUNT;
-    }
-
-    // Set each of inherited IVs on the egg mon, boosted by the parent's EVs in that stat.
-    // The IV and EV fields are both in HP, ATK, DEF, SPEED, SPATK, SPDEF order.
-    for (i = 0; i < INHERITED_IV_COUNT; i++)
-    {
-        struct BoxPokemon *parent = &daycare->mons[whichParents[i]].mon;
-
-        iv = GetBoxMonData(parent, MON_DATA_HP_IV + selectedIvs[i]);
-        iv += GetEvTrainingIVBonus(GetBoxMonData(parent, MON_DATA_HP_EV + selectedIvs[i]));
-        if (iv > MAX_PER_STAT_IVS)
-            iv = MAX_PER_STAT_IVS;
-        SetMonData(egg, MON_DATA_HP_IV + selectedIvs[i], &iv);
+        u8 index = Random() % numAvailable;
+        InheritIV(egg, &daycare->mons[Random() % DAYCARE_MON_COUNT].mon, availableIVs[index]);
+        availableIVs[index] = availableIVs[--numAvailable];
     }
 }
 
@@ -1276,4 +1258,21 @@ void ChooseSendDaycareMon(void)
 {
     ChooseMonForDaycare();
     gMain.savedCallback = CB2_ReturnToField;
+}
+
+// Norman's gift: all six Power items, or none if they don't all fit. VAR_RESULT: TRUE if given.
+u16 GivePowerItemsToPlayer(void)
+{
+    u16 item;
+
+    for (item = FIRST_POWER_ITEM; item <= LAST_POWER_ITEM; item++)
+    {
+        if (!AddBagItem(item, 1))
+        {
+            while (item-- > FIRST_POWER_ITEM)
+                RemoveBagItem(item, 1);
+            return FALSE;
+        }
+    }
+    return TRUE;
 }

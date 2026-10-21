@@ -404,6 +404,12 @@ const u32 *const gItemIconTable[ITEMS_COUNT + 1][2] =
     [ITEM_SHINY_CHARM] = {gItemIcon_StarPiece, gItemIconPalette_ShinyCharm},
     [ITEM_EXP_SHARE_KEY] = {gItemIcon_ExpShare, gItemIconPalette_ExpShare},
     [ITEM_INCUBATOR] = {gItemIcon_LuckyEgg, gItemIconPalette_Incubator},
+    [ITEM_POWER_WEIGHT] = {gItemIcon_MachoBrace, gItemIconPalette_PowerWeight},
+    [ITEM_POWER_BRACER] = {gItemIcon_MachoBrace, gItemIconPalette_PowerBracer},
+    [ITEM_POWER_BELT] = {gItemIcon_MachoBrace, gItemIconPalette_PowerBelt},
+    [ITEM_POWER_ANKLET] = {gItemIcon_MachoBrace, gItemIconPalette_PowerAnklet},
+    [ITEM_POWER_LENS] = {gItemIcon_MachoBrace, gItemIconPalette_PowerLens},
+    [ITEM_POWER_BAND] = {gItemIcon_MachoBrace, gItemIconPalette_PowerBand},
     // Return to field arrow
     [ITEMS_COUNT] = {gItemIcon_ReturnToFieldArrow, gItemIconPalette_ReturnToFieldArrow},
 };

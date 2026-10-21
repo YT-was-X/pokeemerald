@@ -49,7 +49,7 @@
 #define FLAG_EXP_SHARE_ON    0x23 // The EXP. SHARE key item is switched on (was unused)
 #define FLAG_RECEIVED_EXP_SHARE_KEY 0x24 // Got the EXP. SHARE key item from Mr. Stone (was unused)
 #define FLAG_RECEIVED_INCUBATOR 0x25 // Got the INCUBATOR from the Day Care man (was unused)
-#define FLAG_UNUSED_0x026    0x26 // Unused Flag
+#define FLAG_RECEIVED_POWER_ITEMS 0x26 // Got the six Power items from Norman (was unused)
 #define FLAG_UNUSED_0x027    0x27 // Unused Flag
 #define FLAG_UNUSED_0x028    0x28 // Unused Flag
 #define FLAG_UNUSED_0x029    0x29 // Unused Flag

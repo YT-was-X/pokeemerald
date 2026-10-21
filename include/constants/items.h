@@ -413,9 +413,19 @@ enum {
     ITEM_SHINY_CHARM,
     ITEM_EXP_SHARE_KEY,
     ITEM_INCUBATOR,
+    // Held in the Day Care, passes that IV on to the Egg. In STAT_HP..STAT_SPDEF order.
+    ITEM_POWER_WEIGHT,
+    ITEM_POWER_BRACER,
+    ITEM_POWER_BELT,
+    ITEM_POWER_ANKLET,
+    ITEM_POWER_LENS,
+    ITEM_POWER_BAND,
 
     ITEMS_COUNT
 };
+
+#define FIRST_POWER_ITEM ITEM_POWER_WEIGHT
+#define LAST_POWER_ITEM  ITEM_POWER_BAND
 
 // A special item id associated with "Cancel"/"Exit" etc. in a list of items or decorations
 // Its icon is defined at ITEMS_COUNT as the "return to field" arrow
