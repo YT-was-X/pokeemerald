@@ -22,6 +22,7 @@ extern const u8 BattleScript_LocalTwoTrainersDefeated[];
 extern const u8 BattleScript_LocalBattleWonLoseTexts[];
 extern const u8 BattleScript_LocalBattleWonReward[];
 extern const u8 BattleScript_PayDayMoneyAndPickUpItems[];
+extern const u8 BattleScript_PickUpItemsEnd2[];
 extern const u8 BattleScript_LocalBattleLost[];
 extern const u8 BattleScript_LocalBattleLostPrintWhiteOut[];
 extern const u8 BattleScript_LocalBattleLostEnd[];

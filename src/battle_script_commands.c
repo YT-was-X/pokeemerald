@@ -818,6 +818,12 @@ static const u16 sRarePickupItems[] =
     ITEM_TM_EARTHQUAKE,
 };
 
+// Percent chance per Pickup Pokémon at the end of a battle (vanilla 10)
+#define PICKUP_CHANCE 15
+
+// Party slot Cmd_pickup checks next; reset to 0 once the whole party is done
+static EWRAM_DATA u8 sPickupPartyId = 0;
+
 static const u8 sPickupProbabilities[] =
 {
     30, 40, 50, 60, 70, 80, 90, 94, 98
@@ -9639,20 +9645,39 @@ static void Cmd_getsecretpowereffect(void)
     gBattlescriptCurrInstr++;
 }
 
+static u16 GetPickupItemForLevel(u8 level)
+{
+    s32 j;
+    s32 rand = Random() % 100;
+    u8 lvlDivBy10 = (level - 1) / 10;
+    if (lvlDivBy10 > 9)
+        lvlDivBy10 = 9;
+
+    for (j = 0; j < (int)ARRAY_COUNT(sPickupProbabilities); j++)
+    {
+        if (sPickupProbabilities[j] > rand)
+            return sPickupItems[lvlDivBy10 + j];
+        else if (rand == 99 || rand == 98)
+            return sRarePickupItems[lvlDivBy10 + (99 - rand)];
+    }
+    return ITEM_NONE;
+}
+
+// Checks one party member per call, starting after the last one checked, so the
+// battle script can print a message for each item found. Found items go to the
+// bag (held if the bag is full); in the Battle Pyramid they're held, as in vanilla.
 static void Cmd_pickup(void)
 {
-    s32 i;
     u16 species, heldItem;
     u8 ability;
+    const u8 *doneInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
 
-    if (InBattlePike())
+    if (!InBattlePike() && !(gBattleTypeFlags & (BATTLE_TYPE_LINK | BATTLE_TYPE_RECORDED_LINK | BATTLE_TYPE_WALLY_TUTORIAL)))
     {
-
-    }
-    else if (CurrentBattlePyramidLocation() != PYRAMID_LOCATION_NONE)
-    {
-        for (i = 0; i < PARTY_SIZE; i++)
+        while (sPickupPartyId < PARTY_SIZE)
         {
+            u8 i = sPickupPartyId++;
+
             species = GetMonData(&gPlayerParty[i], MON_DATA_SPECIES_OR_EGG);
             heldItem = GetMonData(&gPlayerParty[i], MON_DATA_HELD_ITEM);
 
@@ -9661,59 +9686,40 @@ static void Cmd_pickup(void)
             else
                 ability = gSpeciesInfo[species].abilities[0];
 
-            if (ability == ABILITY_PICKUP
-                && species != SPECIES_NONE
-                && species != SPECIES_EGG
-                && heldItem == ITEM_NONE
-                && (Random() % 10) == 0)
+            if (ability != ABILITY_PICKUP
+             || species == SPECIES_NONE
+             || species == SPECIES_EGG
+             || heldItem != ITEM_NONE
+             || (Random() % 100) >= PICKUP_CHANCE)
+                continue;
+
+            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_PICKUP_TO_BAG;
+            if (CurrentBattlePyramidLocation() != PYRAMID_LOCATION_NONE)
             {
                 heldItem = GetBattlePyramidPickupItemId();
                 SetMonData(&gPlayerParty[i], MON_DATA_HELD_ITEM, &heldItem);
             }
-        }
-    }
-    else
-    {
-        for (i = 0; i < PARTY_SIZE; i++)
-        {
-            species = GetMonData(&gPlayerParty[i], MON_DATA_SPECIES_OR_EGG);
-            heldItem = GetMonData(&gPlayerParty[i], MON_DATA_HELD_ITEM);
-
-            if (GetMonData(&gPlayerParty[i], MON_DATA_ABILITY_NUM))
-                ability = gSpeciesInfo[species].abilities[1];
             else
-                ability = gSpeciesInfo[species].abilities[0];
-
-            if (ability == ABILITY_PICKUP
-                && species != SPECIES_NONE
-                && species != SPECIES_EGG
-                && heldItem == ITEM_NONE
-                && (Random() % 10) == 0)
             {
-                s32 j;
-                s32 rand = Random() % 100;
-                u8 lvlDivBy10 = (GetMonData(&gPlayerParty[i], MON_DATA_LEVEL) - 1) / 10;
-                if (lvlDivBy10 > 9)
-                    lvlDivBy10 = 9;
-
-                for (j = 0; j < (int)ARRAY_COUNT(sPickupProbabilities); j++)
+                heldItem = GetPickupItemForLevel(GetMonData(&gPlayerParty[i], MON_DATA_LEVEL));
+                if (heldItem == ITEM_NONE)
+                    continue;
+                if (!AddBagItem(heldItem, 1))
                 {
-                    if (sPickupProbabilities[j] > rand)
-                    {
-                        SetMonData(&gPlayerParty[i], MON_DATA_HELD_ITEM, &sPickupItems[lvlDivBy10 + j]);
-                        break;
-                    }
-                    else if (rand == 99 || rand == 98)
-                    {
-                        SetMonData(&gPlayerParty[i], MON_DATA_HELD_ITEM, &sRarePickupItems[lvlDivBy10 + (99 - rand)]);
-                        break;
-                    }
+                    SetMonData(&gPlayerParty[i], MON_DATA_HELD_ITEM, &heldItem);
+                    gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_PICKUP_BAG_FULL;
                 }
             }
+
+            PREPARE_MON_NICK_BUFFER(gBattleTextBuff1, GetBattlerAtPosition(B_POSITION_PLAYER_LEFT), i);
+            PREPARE_ITEM_BUFFER(gBattleTextBuff2, heldItem);
+            gBattlescriptCurrInstr += 5;
+            return;
         }
     }
 
-    gBattlescriptCurrInstr++;
+    sPickupPartyId = 0;
+    gBattlescriptCurrInstr = doneInstr;
 }
 
 static void Cmd_docastformchangeanimation(void)

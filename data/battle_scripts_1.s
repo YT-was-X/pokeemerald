@@ -2939,14 +2939,28 @@ BattleScript_LocalBattleWonReward::
 	waitmessage B_WAIT_TIME_LONG
 BattleScript_PayDayMoneyAndPickUpItems::
 	givepaydaymoney
-	pickup
+	call BattleScript_PickUpItems
 	end2
+
+@ Wild Pokémon caught or teleported away (set by HandleEndTurn_PickUpItems)
+BattleScript_PickUpItemsEnd2::
+	call BattleScript_PickUpItems
+	end2
+
+BattleScript_PickUpItems::
+	pickup BattleScript_PickUpItemsReturn
+	printfromtable gPickupStringIds
+	waitmessage B_WAIT_TIME_LONG
+	goto BattleScript_PickUpItems
+BattleScript_PickUpItemsReturn:
+	return
 
 BattleScript_LocalBattleLost::
 	jumpifbattletype BATTLE_TYPE_DOME, BattleScript_CheckDomeDrew
 	jumpifbattletype BATTLE_TYPE_FRONTIER, BattleScript_LocalBattleLostPrintTrainersWinText
 	jumpifbattletype BATTLE_TYPE_TRAINER_HILL, BattleScript_LocalBattleLostPrintTrainersWinText
 	jumpifbattletype BATTLE_TYPE_EREADER_TRAINER, BattleScript_LocalBattleLostEnd
+	call BattleScript_PickUpItems
 	jumpifhalfword CMP_EQUAL, gTrainerBattleOpponent_A, TRAINER_SECRET_BASE, BattleScript_LocalBattleLostEnd
 BattleScript_LocalBattleLostPrintWhiteOut::
 	printstring STRINGID_PLAYERWHITEOUT
@@ -3043,7 +3057,7 @@ BattleScript_FrontierTrainerBattleWon_LoseTexts:
 	printstring STRINGID_TRAINER2LOSETEXT
 BattleScript_TryPickUpItems:
 	jumpifnotbattletype BATTLE_TYPE_PYRAMID, BattleScript_FrontierTrainerBattleWon_End
-	pickup
+	call BattleScript_PickUpItems
 BattleScript_FrontierTrainerBattleWon_End:
 	end2
 
@@ -3066,6 +3080,7 @@ BattleScript_GotAwaySafely::
 BattleScript_WildMonFled::
 	printstring STRINGID_WILDPKMNFLED
 	waitmessage B_WAIT_TIME_LONG
+	call BattleScript_PickUpItems
 	end2
 
 BattleScript_PrintCantRunFromTrainer::

@@ -1166,8 +1166,11 @@
 	.byte B_SCR_OP_GETSECRETPOWEREFFECT
 	.endm
 
-	.macro pickup
+	@ Rolls Pickup for the next eligible party member. If it finds an item, buffers
+	@ the mon and item and continues; once the whole party is checked, jumps to ptr.
+	.macro pickup ptr:req
 	.byte B_SCR_OP_PICKUP
+	.4byte \ptr
 	.endm
 
 	.macro docastformchangeanimation

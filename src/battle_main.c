@@ -117,6 +117,7 @@ static void HandleEndTurn_BattleWon(void);
 static void HandleEndTurn_BattleLost(void);
 static void HandleEndTurn_RanFromBattle(void);
 static void HandleEndTurn_MonFled(void);
+static void HandleEndTurn_PickUpItems(void);
 static void HandleEndTurn_FinishBattle(void);
 static void SpriteCB_UnusedBattleInit(struct Sprite *sprite);
 static void SpriteCB_UnusedBattleInit_Main(struct Sprite *sprite);
@@ -560,10 +561,10 @@ static void (*const sEndTurnFuncsTable[])(void) =
     [B_OUTCOME_RAN]               = HandleEndTurn_RanFromBattle,
     [B_OUTCOME_PLAYER_TELEPORTED] = HandleEndTurn_FinishBattle,
     [B_OUTCOME_MON_FLED]          = HandleEndTurn_MonFled,
-    [B_OUTCOME_CAUGHT]            = HandleEndTurn_FinishBattle,
+    [B_OUTCOME_CAUGHT]            = HandleEndTurn_PickUpItems,
     [B_OUTCOME_NO_SAFARI_BALLS]   = HandleEndTurn_FinishBattle,
     [B_OUTCOME_FORFEITED]         = HandleEndTurn_FinishBattle,
-    [B_OUTCOME_MON_TELEPORTED]    = HandleEndTurn_FinishBattle,
+    [B_OUTCOME_MON_TELEPORTED]    = HandleEndTurn_PickUpItems,
 };
 
 const u8 gStatusConditionString_PoisonJpn[] = _("どく$$$$$");
@@ -5092,6 +5093,14 @@ static void HandleEndTurn_MonFled(void)
     PREPARE_MON_NICK_BUFFER(gBattleTextBuff1, gBattlerAttacker, gBattlerPartyIndexes[gBattlerAttacker]);
     gBattlescriptCurrInstr = BattleScript_WildMonFled;
 
+    gBattleMainFunc = HandleEndTurn_FinishBattle;
+}
+
+// Caught or teleported wild Pokémon: Pickup still triggers (only fleeing skips it)
+static void HandleEndTurn_PickUpItems(void)
+{
+    gCurrentActionFuncId = 0;
+    gBattlescriptCurrInstr = BattleScript_PickUpItemsEnd2;
     gBattleMainFunc = HandleEndTurn_FinishBattle;
 }
 

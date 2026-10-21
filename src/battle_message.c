@@ -511,6 +511,8 @@ static const u8 sText_QuestionForfeitMatch[];
 static const u8 sText_ForfeitedMatch[];
 static const u8 sText_Trainer1WinText[];
 static const u8 sText_Trainer2WinText[];
+static const u8 sText_PkmnPickedUpItem[];
+static const u8 sText_PkmnPickedUpItemBagFull[];
 static const u8 sText_TwoInGameTrainersDefeated[];
 static const u8 sText_Trainer2LoseText[];
 
@@ -885,6 +887,8 @@ const u8 *const gBattleStringsTable[BATTLESTRINGS_COUNT - BATTLESTRINGS_TABLE_ST
     [STRINGID_PKMNBOXLANETTESPCFULL - BATTLESTRINGS_TABLE_START] = gText_PkmnTransferredLanettesPCBoxFull,
     [STRINGID_TRAINER1WINTEXT - BATTLESTRINGS_TABLE_START] = sText_Trainer1WinText,
     [STRINGID_TRAINER2WINTEXT - BATTLESTRINGS_TABLE_START] = sText_Trainer2WinText,
+    [STRINGID_PKMNPICKEDUPITEM - BATTLESTRINGS_TABLE_START] = sText_PkmnPickedUpItem,
+    [STRINGID_PKMNPICKEDUPITEMBAGFULL - BATTLESTRINGS_TABLE_START] = sText_PkmnPickedUpItemBagFull,
 };
 
 const u16 gMissStringIds[] =
@@ -1253,6 +1257,12 @@ const u16 gCaughtMonStringIds[] =
     [B_MSG_LANETTES_BOX_FULL] = STRINGID_PKMNBOXLANETTESPCFULL,
 };
 
+const u16 gPickupStringIds[] =
+{
+    [B_MSG_PICKUP_TO_BAG]   = STRINGID_PKMNPICKEDUPITEM,
+    [B_MSG_PICKUP_BAG_FULL] = STRINGID_PKMNPICKEDUPITEMBAGFULL,
+};
+
 const u16 gTrappingMoves[NUM_TRAPPING_MOVES + 1] =
 {
     MOVE_BIND,
@@ -1423,6 +1433,8 @@ static const u8 sText_QuestionForfeitMatch[] = _("Would you like to forfeit the 
 static const u8 sText_ForfeitedMatch[] = _("{B_PLAYER_NAME} forfeited the match!");
 static const u8 sText_Trainer1WinText[] = _("{B_TRAINER1_WIN_TEXT}");
 static const u8 sText_Trainer2WinText[] = _("{B_TRAINER2_WIN_TEXT}");
+static const u8 sText_PkmnPickedUpItem[] = _("{B_BUFF1} picked up\none {B_BUFF2}!");
+static const u8 sText_PkmnPickedUpItemBagFull[] = _("{B_BUFF1} picked up\none {B_BUFF2}!\pThe BAG is full, so\n{B_BUFF1} is holding it.");
 static const u8 sText_Trainer1Fled[] = _( "{PLAY_SE SE_FLEE}{B_TRAINER1_CLASS} {B_TRAINER1_NAME} fled!");
 static const u8 sText_PlayerLostAgainstTrainer1[] = _("Player lost against\n{B_TRAINER1_CLASS} {B_TRAINER1_NAME}!");
 static const u8 sText_PlayerBattledToDrawTrainer1[] = _("Player battled to a draw against\n{B_TRAINER1_CLASS} {B_TRAINER1_NAME}!");
