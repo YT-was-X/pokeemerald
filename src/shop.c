@@ -85,6 +85,11 @@ enum
 // Largest vanilla mart list is 12 items; leaves room for the post-game Master Ball
 #define MAX_POSTGAME_MART_ITEMS 32
 
+// Buying this many balls at once gives 1 more of the same kind (vanilla: 1 Premier Ball for 10+ Poké Balls)
+#define BONUS_BALL_EVERY 10
+
+static const u8 sText_PluralSuffix[] = _("S");
+
 struct MartInfo
 {
     void (*callback)(void);
@@ -1146,19 +1151,47 @@ static void BuyMenuSubtractMoney(u8 taskId)
         gTasks[taskId].func = Task_ReturnToItemListAfterDecorationPurchase;
 }
 
+// Every 10 balls of any kind bought at once come with 1 more of the same ball,
+// as many as fit in the bag. Returns how many were given.
+static u16 GiveBonusBalls(u16 itemId, u16 quantity)
+{
+    u16 bonus;
+
+    if (GetItemPocket(itemId) != POCKET_POKE_BALLS)
+        return 0;
+
+    for (bonus = quantity / BONUS_BALL_EVERY; bonus > 0; bonus--)
+    {
+        if (AddBagItem(itemId, bonus))
+            break;
+    }
+    return bonus;
+}
+
 static void Task_ReturnToItemListAfterItemPurchase(u8 taskId)
 {
     s16 *data = gTasks[taskId].data;
+    u16 bonus;
 
     if (JOY_NEW(A_BUTTON | B_BUTTON))
     {
         PlaySE(SE_SELECT);
 
-        // Purchasing 10+ Poke Balls gets the player a Premier Ball
-        if (tItemId == ITEM_POKE_BALL && tItemCount >= 10 && AddBagItem(ITEM_PREMIER_BALL, 1) == TRUE)
-            BuyMenuDisplayMessage(taskId, gText_ThrowInPremierBall, BuyMenuReturnToItemList);
+        bonus = GiveBonusBalls(tItemId, tItemCount);
+        if (bonus != 0)
+        {
+            ConvertIntToDecimalStringN(gStringVar1, bonus, STR_CONV_MODE_LEFT_ALIGN, BAG_ITEM_CAPACITY_DIGITS);
+            CopyItemNameHandlePlural(tItemId, gStringVar2, bonus);
+            // CopyItemNameHandlePlural only pluralizes the POKé BALL; every other ball name ends in BALL
+            if (bonus > 1 && tItemId != ITEM_POKE_BALL)
+                StringAppend(gStringVar2, sText_PluralSuffix);
+            StringExpandPlaceholders(gStringVar4, gText_ThrowInBonusBalls);
+            BuyMenuDisplayMessage(taskId, gStringVar4, BuyMenuReturnToItemList);
+        }
         else
+        {
             BuyMenuReturnToItemList(taskId);
+        }
     }
 }
 
