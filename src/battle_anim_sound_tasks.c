@@ -137,10 +137,6 @@ void SoundTask_PlayCryHighPitch(u8 taskId)
             species = gContestResources->moveAnim->species;
     // Destroying the task twice (here and at end of function)
     // results in an incorrect value for gAnimVisualTaskCount
-    #ifndef BUGFIX
-        else
-            DestroyAnimVisualTask(taskId);
-    #endif
     }
     else
     {
@@ -185,10 +181,6 @@ void SoundTask_PlayDoubleCry(u8 taskId)
             species = gContestResources->moveAnim->species;
     // Destroying the task twice (here and at end of function)
     // results in an incorrect value for gAnimVisualTaskCount
-    #ifndef BUGFIX
-        else
-            DestroyAnimVisualTask(taskId);
-    #endif
     }
     else
     {

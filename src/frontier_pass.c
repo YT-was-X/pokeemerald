@@ -35,11 +35,7 @@
 // after gFrontierPassBg_Pal (by default, gFrontierPassBg_Gfx) as a palette.
 // Nothing uses these colors (except the Trainer Card, which correctly writes them)
 // so in practice this bug has no effect on the game.
-#ifdef BUGFIX
 #define NUM_BG_PAL_SLOTS 8
-#else
-#define NUM_BG_PAL_SLOTS 13
-#endif
 
 // All windows displayed in the frontier pass.
 enum
@@ -1034,9 +1030,7 @@ static void Task_HandleFrontierPassInput(u8 taskId)
                 SetMainCallback2(CB2_HideFrontierPass);
                 DestroyTask(taskId);
                 // BUG. The function should return here. Otherwise, it can play the same sound twice and destroy the same task twice.
-                #ifdef BUGFIX
                 return;
-                #endif
             }
         }
 

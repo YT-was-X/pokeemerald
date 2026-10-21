@@ -631,16 +631,9 @@ static void PlayerNotOnBikeMoving(u8 direction, u16 heldKeys)
             // means that the player avatar won't update if they encounter this kind of collision. This has two noticeable effects:
             // - Colliding with it head-on stops the player dead, rather than playing the walking animation and playing a bump sound effect
             // - Colliding with it by changing direction won't turn the player avatar, their walking animation will just speed up.
-#ifdef BUGFIX
             if (collision != COLLISION_STOP_SURFING
              && collision != COLLISION_LEDGE_JUMP
              && collision != COLLISION_PUSHED_BOULDER)
-#else
-            if (collision != COLLISION_STOP_SURFING
-             && collision != COLLISION_LEDGE_JUMP
-             && collision != COLLISION_PUSHED_BOULDER
-             && collision != COLLISION_ROTATING_GATE)
-#endif
             {
                 PlayerNotOnBikeCollide(direction);
             }
@@ -1686,10 +1679,8 @@ static void Task_WaitStopSurfing(u8 taskId)
         gPlayerAvatar.preventStep = FALSE;
         UnlockPlayerFieldControls();
         DestroySprite(&gSprites[playerObjEvent->fieldEffectSpriteId]);
-#ifdef BUGFIX
         // If this is not defined but the player steps into grass from surfing, they will appear over the grass instead of in the grass.
         playerObjEvent->triggerGroundEffectsOnMove = TRUE;
-#endif
         DestroyTask(taskId);
     }
 }

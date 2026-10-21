@@ -45,6 +45,7 @@
 #endif
 
 // Uncomment to fix some identified minor bugs
+// (This hack has every BUGFIX block applied directly in the source, so this no longer changes anything.)
 //#define BUGFIX
 
 // Various undefined behavior bugs may or may not prevent compilation with

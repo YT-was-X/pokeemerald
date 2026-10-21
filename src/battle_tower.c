@@ -1330,11 +1330,7 @@ void PutNewBattleTowerRecord(struct EmeraldBattleTowerRecord *newRecordEm)
             for (k = 0; k < PLAYER_NAME_LENGTH; k++)
             {
             // Incorrect index being used
-            #ifdef BUGFIX
                 #define INDEX k
-            #else
-                #define INDEX j
-            #endif
                 if (gSaveBlock2Ptr->frontier.towerRecords[i].name[INDEX] != newRecord->name[INDEX])
                     break;
                 if (newRecord->name[INDEX] == EOS)
@@ -1832,15 +1828,9 @@ static void FillFactoryFrontierTrainerParty(u16 trainerId, u8 firstMonId)
     if (trainerId < FRONTIER_TRAINERS_COUNT)
     {
     // By mistake Battle Tower's Level 50 challenge number is used to determine the IVs for Battle Factory.
-    #ifdef BUGFIX
         u8 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
         u8 battleMode = VarGet(VAR_FRONTIER_BATTLE_MODE);
         u8 challengeNum = gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode] / FRONTIER_STAGES_PER_CHALLENGE;
-    #else
-        u8 UNUSED lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
-        u8 battleMode = VarGet(VAR_FRONTIER_BATTLE_MODE);
-        u8 challengeNum = gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][FRONTIER_LVL_50] / FRONTIER_STAGES_PER_CHALLENGE;
-    #endif
         if (gSaveBlock2Ptr->frontier.curChallengeBattleNum < FRONTIER_STAGES_PER_CHALLENGE - 1)
             fixedIV = GetFactoryMonFixedIV(challengeNum, FALSE);
         else
@@ -2770,11 +2760,7 @@ static void AwardBattleTowerRibbons(void)
 {
     s32 i;
     u32 partyIndex;
-#ifdef BUGFIX
     struct RibbonCounter ribbons[MAX_FRONTIER_PARTY_SIZE];
-#else
-    struct RibbonCounter ribbons[3]; // BUG: 4 Pokémon can receive ribbons in a double battle mode.
-#endif
     u8 ribbonType = 0;
     u8 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
     u8 battleMode = VarGet(VAR_FRONTIER_BATTLE_MODE);
@@ -2979,11 +2965,7 @@ static void FillPartnerParty(u16 trainerId)
                       sStevenMons[i].level,
                       sStevenMons[i].fixedIV,
                       TRUE,
-                      #ifdef BUGFIX
                       j,
-                      #else
-                      i, // BUG: personality was stored in the 'j' variable. As a result, Steven's Pokémon do not have the intended natures.
-                      #endif
                       OT_ID_PRESET, STEVEN_OTID);
             for (j = 0; j < PARTY_SIZE; j++)
                 SetMonData(&gPlayerParty[MULTI_PARTY_SIZE + i], MON_DATA_HP_EV + j, &sStevenMons[i].evs[j]);
