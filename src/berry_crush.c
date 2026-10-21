@@ -13,6 +13,7 @@
 #include "item_menu.h"
 #include "link.h"
 #include "link_rfu.h"
+#include "minigame_solo.h"
 #include "main.h"
 #include "malloc.h"
 #include "math_util.h"
@@ -182,6 +183,8 @@ enum {
 // Data is only sent if the player is the leader or if they pressed A
 #define SEND_GAME_STATE 2
 
+#define CPU_BERRY_COUNT 20 // Solo play: computer players bring one of the first 20 berries
+
 struct BerryCrushGame_Player
 {
     u8 name[PLAYER_NAME_LENGTH + 1 + 4];
@@ -321,6 +324,8 @@ struct BerryCrushGame
     struct BerryCrushGame_Results results;
     struct BerryCrushGame_Player players[MAX_RFU_PLAYERS];
     struct BerryCrushGame_Gfx gfx;
+    s8 cpuPressTimer[MAX_RFU_PLAYERS];  // Solo play: frames until each computer player presses A
+    u8 cpuPressPeriod[MAX_RFU_PLAYERS]; // Solo play: each computer player's pressing rhythm
 };
 
 static void VBlankCB(void);
@@ -973,6 +978,7 @@ static u32 QuitBerryCrush(MainCallback exitCallback)
 
     DestroyTask(sGame->taskId);
     FREE_AND_SET_NULL(sGame);
+    EndSoloMinigame();
     SetMainCallback2(exitCallback);
     if (exitCallback == CB2_ReturnToField)
     {
@@ -997,7 +1003,7 @@ void StartBerryCrush(MainCallback exitCallback)
     u8 playerCount = 0;
     u8 multiplayerId;
 
-    if (!gReceivedRemoteLinkPlayers || gWirelessCommType == 0)
+    if (!IsSoloMinigame() && (!gReceivedRemoteLinkPlayers || gWirelessCommType == 0))
     {
         // Link disconnected
         ERROR_EXIT(exitCallback);
@@ -1245,8 +1251,11 @@ static s32 ShowGameDisplay(void)
         CopyBgTilemapBufferToVram(3);
         break;
     case 8:
-        LoadWirelessStatusIndicatorSpriteGfx();
-        CreateWirelessStatusIndicatorSprite(0,  0);
+        if (!IsSoloMinigame())
+        {
+            LoadWirelessStatusIndicatorSpriteGfx();
+            CreateWirelessStatusIndicatorSprite(0,  0);
+        }
         CreateGameSprites(game);
         SetGpuReg(REG_OFFSET_BG1VOFS, -gSpriteCoordOffsetY);
         ChangeBgX(1, 0, BG_COORD_SET);
@@ -1317,7 +1326,8 @@ static s32 HideGameDisplay(void)
         ClearGpuRegBits(REG_OFFSET_DISPCNT, DISPCNT_OBJ_ON | DISPCNT_OBJ_1D_MAP);
         break;
     case 6:
-        DestroyWirelessStatusIndicatorSprite();
+        if (!IsSoloMinigame())
+            DestroyWirelessStatusIndicatorSprite();
         DestroyGameSprites(game);
         DigitObjUtil_Free();
         break;
@@ -2385,6 +2395,9 @@ static u32 Cmd_WaitForOthersToPickBerries(struct BerryCrushGame *game, u8 *args)
         for (i = 0; i < game->playerCount; i++)
         {
             game->players[i].berryId = gBlockRecvBuffer[i][0];
+            // In solo play the block is the player's own; computer players bring their own berry
+            if (IsSoloMinigame() && i != 0)
+                game->players[i].berryId = Random() % CPU_BERRY_COUNT;
             if (game->players[i].berryId > LAST_BERRY_INDEX + 1)
                 game->players[i].berryId = 0;
             game->targetAPresses += gBerryCrush_BerryData[game->players[i].berryId].difficulty;
@@ -2541,6 +2554,38 @@ static u32 Cmd_Countdown(struct BerryCrushGame *game,  u8 *args)
     }
     game->cmdState++;
     return 0;
+}
+
+// Solo play: computer players press A at a steady rhythm of their own (a press
+// every CPU_PRESS_PERIOD_MIN to CPU_PRESS_PERIOD_MAX frames), with an occasional
+// hesitation. Their presses are written where their link packets would arrive.
+#define CPU_PRESS_PERIOD_MIN 7
+#define CPU_PRESS_PERIOD_MAX 10
+
+static void WriteCpuInputs(struct BerryCrushGame *game)
+{
+    u8 i;
+
+    for (i = 1; i < game->playerCount; i++)
+    {
+        struct BerryCrushGame_LinkState *linkState = (struct BerryCrushGame_LinkState *)gRecvCmds[i];
+
+        memset(gRecvCmds[i], 0, sizeof(gRecvCmds[i]));
+        if (game->cpuPressPeriod[i] == 0)
+        {
+            game->cpuPressPeriod[i] = CPU_PRESS_PERIOD_MIN + Random() % (CPU_PRESS_PERIOD_MAX - CPU_PRESS_PERIOD_MIN + 1);
+            game->cpuPressTimer[i] = Random() % game->cpuPressPeriod[i];
+        }
+        if (--game->cpuPressTimer[i] > 0)
+            continue;
+
+        game->cpuPressTimer[i] = game->cpuPressPeriod[i];
+        if (Random() % 16 == 0)
+            game->cpuPressTimer[i] += Random() % 4; // Hesitate
+        linkState->rfuCmd = RFUCMD_SEND_PACKET;
+        linkState->sendFlag = SEND_GAME_STATE;
+        linkState->pushedAButton = TRUE;
+    }
 }
 
 // Receive and process data from all players
@@ -2842,6 +2887,8 @@ static u32 Cmd_PlayGame_Leader(struct BerryCrushGame *game, u8 *args)
     else
     {
         game->leaderTimer++;
+        if (IsSoloMinigame())
+            WriteCpuInputs(game);
         HandlePartnerInput(game);
         UpdateLeaderGameState(game);
         HandlePlayerInput(game);
@@ -3145,7 +3192,8 @@ static u32 Cmd_TabulateResults(struct BerryCrushGame *game, u8 *args)
         game->cmdTimer = 0;
         break;
     case 6:
-        if (GetBlockReceivedStatus() != 1)
+        // Only the leader sends the results (in solo play, echoed for everyone)
+        if (IsSoloMinigame() ? !(GetBlockReceivedStatus() & 1) : GetBlockReceivedStatus() != 1)
             return 0;
 
         // Receive results calculated by leader
@@ -3230,6 +3278,9 @@ static u32 Cmd_SaveGame(struct BerryCrushGame *game, u8 *args)
     case 2:
         if (!IsLinkTaskFinished())
             return 0;
+        // No link save in solo play; records and powder are saved with the next normal save
+        if (IsSoloMinigame())
+            break;
         DrawDialogueFrame(0, FALSE);
         AddTextPrinterParameterized2(0, FONT_NORMAL, gText_SavingDontTurnOffPower, 0, 0, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_WHITE, TEXT_COLOR_LIGHT_GRAY);
         CopyWindowToVram(0, COPYWIN_FULL);
@@ -3441,6 +3492,9 @@ static void ResetGame(struct BerryCrushGame *game)
     u8 i = 0;
 
     IncrementGameStat(GAME_STAT_PLAYED_BERRY_CRUSH);
+    // Solo play loops packets back without a link refreshing them; drop the last game's
+    if (IsSoloMinigame())
+        ClearRecvCommands();
     game->unused = 0;
     game->cmdTimer = 0;
     game->gameState = STATE_RESET;

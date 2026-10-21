@@ -1281,7 +1281,15 @@ static void RfuPrepareSendBuffer(u16 command)
 void Rfu_SendPacket(void *data)
 {
     if (IsSoloMinigame())
+    {
+        // Loop the packet back to the player (player 0), framed like a received one
+        u32 i;
+
+        gRecvCmds[0][0] = RFUCMD_SEND_PACKET;
+        for (i = 0; i < RFU_PACKET_SIZE; i++)
+            gRecvCmds[0][1 + i] = ((u16 *)data)[i];
         return;
+    }
     if (gSendCmd[0] == 0 && !RfuHasErrored())
     {
         memcpy(gRfu.packet, data, sizeof(gRfu.packet));
