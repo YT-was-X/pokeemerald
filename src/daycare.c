@@ -876,6 +876,8 @@ void GiveEggFromDaycare(void)
     _GiveEggFromDaycare(&gSaveBlock1Ptr->daycare);
 }
 
+#define EGG_CHECK_STEPS 128
+
 static bool8 TryProduceOrHatchEgg(struct DayCare *daycare)
 {
     u32 i, validEggs = 0;
@@ -887,7 +889,8 @@ static bool8 TryProduceOrHatchEgg(struct DayCare *daycare)
     }
 
     // Check if an egg should be produced
-    if (daycare->offspringPersonality == 0 && validEggs == DAYCARE_MON_COUNT && (daycare->mons[1].steps & 0xFF) == 0xFF)
+    // Rolls every EGG_CHECK_STEPS steps (vanilla 256)
+    if (daycare->offspringPersonality == 0 && validEggs == DAYCARE_MON_COUNT && (daycare->mons[1].steps % EGG_CHECK_STEPS) == EGG_CHECK_STEPS - 1)
     {
         u8 compatibility = GetDaycareCompatibilityScore(daycare);
         if (compatibility > (Random() * 100u) / USHRT_MAX)
@@ -1017,7 +1020,6 @@ static u8 GetDaycareCompatibilityScore(struct DayCare *daycare)
     u32 i;
     u16 eggGroups[DAYCARE_MON_COUNT][EGG_GROUPS_PER_MON];
     u16 species[DAYCARE_MON_COUNT];
-    u32 trainerIds[DAYCARE_MON_COUNT];
     u32 genders[DAYCARE_MON_COUNT];
 
     for (i = 0; i < DAYCARE_MON_COUNT; i++)
@@ -1025,7 +1027,6 @@ static u8 GetDaycareCompatibilityScore(struct DayCare *daycare)
         u32 personality;
 
         species[i] = GetBoxMonData(&daycare->mons[i].mon, MON_DATA_SPECIES);
-        trainerIds[i] = GetBoxMonData(&daycare->mons[i].mon, MON_DATA_OT_ID);
         personality = GetBoxMonData(&daycare->mons[i].mon, MON_DATA_PERSONALITY);
         genders[i] = GetGenderFromSpeciesAndPersonality(species[i], personality);
         eggGroups[i][0] = gSpeciesInfo[species[i]].eggGroups[0];
@@ -1039,12 +1040,13 @@ static u8 GetDaycareCompatibilityScore(struct DayCare *daycare)
     if (eggGroups[0][0] == EGG_GROUP_DITTO && eggGroups[1][0] == EGG_GROUP_DITTO)
         return PARENTS_INCOMPATIBLE;
 
+    // Trainer IDs are ignored: nearly every Pokémon the player owns shares their ID,
+    // so the pair is always scored as if from different trainers (vanilla same-ID pairs
+    // drop one level).
+
     // one parent is Ditto
     if (eggGroups[0][0] == EGG_GROUP_DITTO || eggGroups[1][0] == EGG_GROUP_DITTO)
     {
-        if (trainerIds[0] == trainerIds[1])
-            return PARENTS_LOW_COMPATIBILITY;
-
         return PARENTS_MED_COMPATIBILITY;
     }
     // neither parent is Ditto
@@ -1058,19 +1060,9 @@ static u8 GetDaycareCompatibilityScore(struct DayCare *daycare)
             return PARENTS_INCOMPATIBLE;
 
         if (species[0] == species[1])
-        {
-            if (trainerIds[0] == trainerIds[1])
-                return PARENTS_MED_COMPATIBILITY; // same species, same trainer
-
-            return PARENTS_MAX_COMPATIBILITY; // same species, different trainers
-        }
+            return PARENTS_MAX_COMPATIBILITY; // same species
         else
-        {
-            if (trainerIds[0] != trainerIds[1])
-                return PARENTS_MED_COMPATIBILITY; // different species, different trainers
-
-            return PARENTS_LOW_COMPATIBILITY; // different species, same trainer
-        }
+            return PARENTS_MED_COMPATIBILITY; // different species
     }
 }
 
