@@ -3595,7 +3595,7 @@ static void Msg_CommunicationStandby(void)
     {
     case 0:
         sPokemonJumpGfx->msgWindowId = AddMessageWindow(7, 10, 16, 2);
-        AddTextPrinterParameterized(sPokemonJumpGfx->msgWindowId, FONT_NORMAL, gText_CommunicationStandby4, 0, 1, TEXT_SKIP_DRAW, NULL);
+        AddTextPrinterParameterized(sPokemonJumpGfx->msgWindowId, FONT_NORMAL, IsSoloMinigame() ? gText_SoloPleaseWait : gText_CommunicationStandby4, 0, 1, TEXT_SKIP_DRAW, NULL);
         CopyWindowToVram(sPokemonJumpGfx->msgWindowId, COPYWIN_GFX);
         sPokemonJumpGfx->mainState++;
         break;

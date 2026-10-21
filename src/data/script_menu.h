@@ -787,6 +787,14 @@ static const struct MenuAction MultichoiceList_GameCornerPrizeTypes[] =
     {gText_Quit},
 };
 
+static const struct MenuAction MultichoiceList_SoloMinigames[] =
+{
+    {gText_PokemonJump},
+    {gText_DodrioBerryPicking},
+    {gText_BerryCrush},
+    {gText_Exit},
+};
+
 static const struct MenuAction MultichoiceList_Exit[] =
 {
     {gText_Exit},
@@ -916,6 +924,7 @@ static const struct MultichoiceListStruct sMultichoiceLists[] =
     [MULTI_TAG_MATCH_TYPE]             = MULTICHOICE(MultichoiceList_TagMatchType),
     [MULTI_BUY_SELL_QUIT]              = MULTICHOICE(MultichoiceList_BuySellQuit),
     [MULTI_GAME_CORNER_PRIZE_TYPES]    = MULTICHOICE(MultichoiceList_GameCornerPrizeTypes),
+    [MULTI_SOLO_MINIGAMES]             = MULTICHOICE(MultichoiceList_SoloMinigames),
 };
 
 const u8 *const gStdStrings[] =

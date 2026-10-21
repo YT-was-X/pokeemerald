@@ -559,3 +559,6 @@ gSpecials::
 	def_special ShowGameCornerPrizeMenu
 	def_special BufferGameCornerPrizeInfo
 	def_special TryBuyGameCornerPrize
+	def_special PlaySoloPokemonJump, waitstate=1
+	def_special PlaySoloDodrioBerryPicking, waitstate=1
+	def_special PlaySoloBerryCrush, waitstate=1

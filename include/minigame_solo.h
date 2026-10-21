@@ -11,4 +11,7 @@ extern u8 gSoloMinigamePlayers;
 
 void EndSoloMinigame(void);
 
+// Replaces "Communication standby…" in solo play
+extern const u8 gText_SoloPleaseWait[];
+
 #endif // GUARD_MINIGAME_SOLO_H

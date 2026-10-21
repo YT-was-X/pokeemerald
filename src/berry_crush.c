@@ -2263,6 +2263,10 @@ static u32 Cmd_PrintMessage(struct BerryCrushGame *game, u8 *args)
             StringExpandPlaceholders(gStringVar4, sMessages[args[0]]);
             AddTextPrinterParameterized2(0, FONT_NORMAL, gStringVar4, game->textSpeed, 0, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_WHITE, TEXT_COLOR_LIGHT_GRAY);
         }
+        else if (args[0] == MSG_COMM_STANDBY && IsSoloMinigame())
+        {
+            AddTextPrinterParameterized2(0, FONT_NORMAL, gText_SoloPleaseWait, game->textSpeed, 0, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_WHITE, TEXT_COLOR_LIGHT_GRAY);
+        }
         else
         {
             AddTextPrinterParameterized2(0, FONT_NORMAL, sMessages[args[0]], game->textSpeed, 0, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_WHITE, TEXT_COLOR_LIGHT_GRAY);
@@ -3426,6 +3430,14 @@ static u32 Cmd_PlayAgain(struct BerryCrushGame *game, u8 *args)
 
 static u32 Cmd_StopGame(struct BerryCrushGame *game, u8 *args)
 {
+    // In solo play, choosing not to play again just ends the game
+    if (IsSoloMinigame() && game->playAgainState != PLAY_AGAIN_NO_BERRIES)
+    {
+        RunOrScheduleCommand(CMD_CLOSE_LINK, SCHEDULE_CMD, NULL);
+        game->cmdState = 0;
+        return 0;
+    }
+
     switch (game->cmdState)
     {
     case 0:

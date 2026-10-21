@@ -15,6 +15,8 @@
 
 EWRAM_DATA u8 gSoloMinigamePlayers = 0;
 
+const u8 gText_SoloPleaseWait[] = _("Please wait…");
+
 static const u8 sCpuNames[][PLAYER_NAME_LENGTH + 1] =
 {
     _("ZOE"),

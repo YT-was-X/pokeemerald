@@ -5141,7 +5141,7 @@ static void Msg_CommunicationStandby(void)
         break;
     case 1:
         FillWindowPixelBuffer(sGfx->windowIds[0], PIXEL_FILL(1));
-        AddTextPrinterParameterized(sGfx->windowIds[0], FONT_NORMAL, gText_CommunicationStandby3, 0, 5, TEXT_SKIP_DRAW, NULL);
+        AddTextPrinterParameterized(sGfx->windowIds[0], FONT_NORMAL, IsSoloMinigame() ? gText_SoloPleaseWait : gText_CommunicationStandby3, 0, 5, TEXT_SKIP_DRAW, NULL);
         CopyWindowToVram(sGfx->windowIds[0], COPYWIN_GFX);
         sGfx->state++;
         break;

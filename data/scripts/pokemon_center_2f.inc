@@ -189,6 +189,82 @@ PokemonCenter_2F_EventScript_GruntCantSellBagFull::
 	goto PokemonCenter_2F_EventScript_GruntSell
 	end
 
+@ Minigame club: plays the wireless minigames solo, with computer partners (src/minigame_solo.c)
+PokemonCenter_2F_EventScript_MinigameHost::
+	lock
+	faceplayer
+	msgbox PokemonCenter_2F_Text_MinigameWelcome, MSGBOX_DEFAULT
+PokemonCenter_2F_EventScript_ChooseMinigame::
+	message PokemonCenter_2F_Text_WhichMinigame
+	waitmessage
+	multichoice 0, 0, MULTI_SOLO_MINIGAMES, FALSE
+	switch VAR_RESULT
+	case 0, PokemonCenter_2F_EventScript_PlayPokemonJump
+	case 1, PokemonCenter_2F_EventScript_PlayDodrioBerryPicking
+	case 2, PokemonCenter_2F_EventScript_PlayBerryCrush
+	goto PokemonCenter_2F_EventScript_MinigameGoodbye
+	end
+
+PokemonCenter_2F_EventScript_PlayPokemonJump::
+	special IsPokemonJumpSpeciesInParty
+	goto_if_eq VAR_RESULT, FALSE, PokemonCenter_2F_EventScript_NoPokemonJumpMon
+	msgbox PokemonCenter_2F_Text_EnterWhichPokemon, MSGBOX_DEFAULT
+	fadescreen FADE_TO_BLACK
+	setvar VAR_0x8005, 0
+	special ChooseMonForWirelessMinigame
+	goto_if_ge VAR_0x8004, PARTY_SIZE, PokemonCenter_2F_EventScript_ChooseMinigame
+	fadescreen FADE_TO_BLACK
+	special PlaySoloPokemonJump
+	goto PokemonCenter_2F_EventScript_MinigameThanks
+	end
+
+PokemonCenter_2F_EventScript_PlayDodrioBerryPicking::
+	special IsDodrioInParty
+	goto_if_eq VAR_RESULT, FALSE, PokemonCenter_2F_EventScript_NoDodrio
+	msgbox PokemonCenter_2F_Text_EnterWhichPokemon, MSGBOX_DEFAULT
+	fadescreen FADE_TO_BLACK
+	setvar VAR_0x8005, 1
+	special ChooseMonForWirelessMinigame
+	goto_if_ge VAR_0x8004, PARTY_SIZE, PokemonCenter_2F_EventScript_ChooseMinigame
+	fadescreen FADE_TO_BLACK
+	special PlaySoloDodrioBerryPicking
+	goto PokemonCenter_2F_EventScript_MinigameThanks
+	end
+
+PokemonCenter_2F_EventScript_PlayBerryCrush::
+	specialvar VAR_RESULT, PlayerHasBerries
+	goto_if_eq VAR_RESULT, FALSE, PokemonCenter_2F_EventScript_NoBerries
+	msgbox PokemonCenter_2F_Text_LetsBerryCrush, MSGBOX_DEFAULT
+	fadescreen FADE_TO_BLACK
+	special PlaySoloBerryCrush
+	goto PokemonCenter_2F_EventScript_MinigameThanks
+	end
+
+PokemonCenter_2F_EventScript_NoPokemonJumpMon::
+	msgbox PokemonCenter_2F_Text_NoPokemonJumpMon, MSGBOX_DEFAULT
+	goto PokemonCenter_2F_EventScript_ChooseMinigame
+	end
+
+PokemonCenter_2F_EventScript_NoDodrio::
+	msgbox PokemonCenter_2F_Text_NoDodrio, MSGBOX_DEFAULT
+	goto PokemonCenter_2F_EventScript_ChooseMinigame
+	end
+
+PokemonCenter_2F_EventScript_NoBerries::
+	msgbox PokemonCenter_2F_Text_NoBerries, MSGBOX_DEFAULT
+	goto PokemonCenter_2F_EventScript_ChooseMinigame
+	end
+
+PokemonCenter_2F_EventScript_MinigameThanks::
+	msgbox PokemonCenter_2F_Text_MinigameThanks, MSGBOX_DEFAULT
+	release
+	end
+
+PokemonCenter_2F_EventScript_MinigameGoodbye::
+	msgbox PokemonCenter_2F_Text_MinigameGoodbye, MSGBOX_DEFAULT
+	release
+	end
+
 @ First-visit tour (CableClub_EventScript_Tutorial), given by TEALA at the gift terminal
 PokemonCenter_2F_Text_TourIntro:
 	.string "Hello!\n"
@@ -221,7 +297,46 @@ PokemonCenter_2F_Text_TourCounters:
 	.string "buying and selling POKéMON.\p"
 	.string "The POKéMON CENTER can't say\n"
 	.string "where they come from…\p"
-	.string "Please be careful over there.$"
+	.string "Please be careful over there.\p"
+	.string "Oh, and the boy by the window\n"
+	.string "always wants someone to play\l"
+	.string "WIRELESS minigames with him.$"
+
+PokemonCenter_2F_Text_MinigameWelcome:
+	.string "Hi! My friends and I play the\n"
+	.string "WIRELESS minigames all day.\p"
+	.string "We need one more player.\n"
+	.string "Want to join us?$"
+
+PokemonCenter_2F_Text_WhichMinigame:
+	.string "Which game do you want to play?$"
+
+PokemonCenter_2F_Text_EnterWhichPokemon:
+	.string "Which POKéMON will you enter?$"
+
+PokemonCenter_2F_Text_LetsBerryCrush:
+	.string "BERRY CRUSH it is!\n"
+	.string "Bring a BERRY to crush!$"
+
+PokemonCenter_2F_Text_NoPokemonJumpMon:
+	.string "POKéMON JUMP needs a small POKéMON\n"
+	.string "that can jump, like PIKACHU or\l"
+	.string "MARILL.$"
+
+PokemonCenter_2F_Text_NoDodrio:
+	.string "DODRIO BERRY-PICKING needs a\n"
+	.string "DODRIO in your party.$"
+
+PokemonCenter_2F_Text_NoBerries:
+	.string "BERRY CRUSH needs a BERRY.\n"
+	.string "Come back when you have one!$"
+
+PokemonCenter_2F_Text_MinigameThanks:
+	.string "That was fun!\n"
+	.string "Let's play again sometime!$"
+
+PokemonCenter_2F_Text_MinigameGoodbye:
+	.string "Come play with us anytime!$"
 
 PokemonCenter_2F_Text_DaycareCounterWelcome:
 	.string "Hello! This counter is linked to the\n"

@@ -124,6 +124,7 @@
 #define MULTI_TAG_MATCH_TYPE               113
 #define MULTI_BUY_SELL_QUIT                114
 #define MULTI_GAME_CORNER_PRIZE_TYPES      115
+#define MULTI_SOLO_MINIGAMES               116
 
 // Lilycove SS Tidal Multichoice Selections
 #define SSTIDAL_SELECTION_SLATEPORT        0
