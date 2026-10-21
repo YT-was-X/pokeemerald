@@ -14,6 +14,7 @@
 #include "sound.h"
 #include "pokedex.h"
 #include "recorded_battle.h"
+#include "wild_encounter.h"
 #include "window.h"
 #include "reshow_battle_screen.h"
 #include "main.h"
@@ -34,6 +35,7 @@
 #include "battle_arena.h"
 #include "battle_pike.h"
 #include "battle_pyramid.h"
+#include "field_player_avatar.h"
 #include "field_specials.h"
 #include "pokemon_summary_screen.h"
 #include "pokenav.h"
@@ -9930,18 +9932,25 @@ static void Cmd_handleballthrow(void)
         else
             catchRate = gSpeciesInfo[gBattleMons[gBattlerTarget].species].catchRate;
 
-        if (gLastUsedItem > ITEM_SAFARI_BALL)
+        if (gLastUsedItem == ITEM_MASTER_BALL)
+        {
+            ballMultiplier = 10; // always caught below; sBallCatchBonuses starts at the Ultra Ball
+        }
+        else if (gLastUsedItem > ITEM_SAFARI_BALL)
         {
             switch (gLastUsedItem)
             {
             case ITEM_NET_BALL:
                 if (IS_BATTLER_OF_TYPE(gBattlerTarget, TYPE_WATER) || IS_BATTLER_OF_TYPE(gBattlerTarget, TYPE_BUG))
-                    ballMultiplier = 30;
+                    ballMultiplier = 35; // Gen 7+ (vanilla 3x)
                 else
                     ballMultiplier = 10;
                 break;
             case ITEM_DIVE_BALL:
-                if (GetCurrentMapType() == MAP_TYPE_UNDERWATER)
+                // Gen 4+: also while surfing or fishing (vanilla: underwater only)
+                if (GetCurrentMapType() == MAP_TYPE_UNDERWATER
+                 || TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_SURFING)
+                 || gIsFishingEncounter)
                     ballMultiplier = 35;
                 else
                     ballMultiplier = 10;
@@ -9960,14 +9969,16 @@ static void Cmd_handleballthrow(void)
                 break;
             case ITEM_REPEAT_BALL:
                 if (GetSetPokedexFlag(SpeciesToNationalPokedexNum(gBattleMons[gBattlerTarget].species), FLAG_GET_CAUGHT))
-                    ballMultiplier = 30;
+                    ballMultiplier = 35; // Gen 7+ (vanilla 3x)
                 else
                     ballMultiplier = 10;
                 break;
             case ITEM_TIMER_BALL:
-                ballMultiplier = gBattleResults.battleTurnCounter + 10;
-                if (ballMultiplier > 40)
+                // Gen 5+: +0.3x per turn, 4x after 10 turns (vanilla +0.1x, 4x after 30)
+                if (gBattleResults.battleTurnCounter >= 10)
                     ballMultiplier = 40;
+                else
+                    ballMultiplier = gBattleResults.battleTurnCounter * 3 + 10;
                 break;
             case ITEM_LUXURY_BALL:
             case ITEM_PREMIER_BALL:
@@ -9988,6 +9999,9 @@ static void Cmd_handleballthrow(void)
             odds *= 2;
         if (gBattleMons[gBattlerTarget].status1 & (STATUS1_POISON | STATUS1_BURN | STATUS1_PARALYSIS | STATUS1_TOXIC_POISON))
             odds = (odds * 15) / 10;
+
+        if (gLastUsedItem == ITEM_MASTER_BALL)
+            odds = 255;
 
         if (gLastUsedItem != ITEM_SAFARI_BALL)
         {
@@ -10022,9 +10036,6 @@ static void Cmd_handleballthrow(void)
             odds = 1048560 / odds;
 
             for (shakes = 0; shakes < BALL_3_SHAKES_SUCCESS && Random() < odds; shakes++);
-
-            if (gLastUsedItem == ITEM_MASTER_BALL)
-                shakes = BALL_3_SHAKES_SUCCESS; // why calculate the shakes before that check?
 
             BtlController_EmitBallThrowAnim(B_COMM_TO_CONTROLLER, shakes);
             MarkBattlerForControllerExec(gActiveBattler);

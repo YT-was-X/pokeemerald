@@ -57,6 +57,8 @@ static bool8 IsAbilityAllowingEncounter(u8 level);
 
 EWRAM_DATA static u8 sWildEncountersDisabled = 0;
 EWRAM_DATA static u32 sFeebasRngValue = 0;
+// Set for a battle started by fishing (Dive Ball bonus); cleared when any battle ends
+EWRAM_DATA bool8 gIsFishingEncounter = FALSE;
 
 #include "data/wild_encounters.h"
 
@@ -778,6 +780,7 @@ void FishingWildEncounter(u8 rod)
     }
     IncrementGameStat(GAME_STAT_FISHING_ENCOUNTERS);
     SetPokemonAnglerSpecies(species);
+    gIsFishingEncounter = TRUE;
     BattleSetup_StartWildBattle();
 }
 

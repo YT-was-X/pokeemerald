@@ -48,6 +48,7 @@
 #include "trig.h"
 #include "tv.h"
 #include "util.h"
+#include "wild_encounter.h"
 #include "window.h"
 #include "constants/abilities.h"
 #include "constants/battle_move_effects.h"
@@ -5225,6 +5226,8 @@ static void WaitForEvoSceneToFinish(void)
 
 static void ReturnFromBattleToOverworld(void)
 {
+    gIsFishingEncounter = FALSE;
+
     if (!(gBattleTypeFlags & BATTLE_TYPE_LINK))
     {
         RandomlyGivePartyPokerus(gPlayerParty);
