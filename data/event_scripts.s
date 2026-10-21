@@ -21,6 +21,7 @@
 #include "constants/comparison_operators.h"
 #include "constants/contest.h"
 #include "constants/daycare.h"
+#include "constants/training_camp.h"
 #include "constants/decorations.h"
 #include "constants/easy_chat.h"
 #include "constants/event_objects.h"

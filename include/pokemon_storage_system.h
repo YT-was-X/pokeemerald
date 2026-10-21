@@ -16,12 +16,25 @@ ROWS        0   1   2   3   4   5
             24  25  26  27  28  29
 */
 
+// The Pokémon Training Camp's one slot (src/training_camp.c)
+struct TrainingCampMon
+{
+    struct BoxPokemon mon;
+    u32 steps;
+    u8 evStat; // STAT_HP..STAT_SPDEF, or TRAINING_CAMP_NO_EVS
+    u8 padding[3];
+};
+
 struct PokemonStorage
 {
     /*0x0000*/ u8 currentBox;
     /*0x0004*/ struct BoxPokemon boxes[TOTAL_BOXES_COUNT][IN_BOX_COUNT];
     /*0x8344*/ u8 boxNames[TOTAL_BOXES_COUNT][BOX_NAME_LENGTH + 1];
     /*0x83C2*/ u8 boxWallpapers[TOTAL_BOXES_COUNT];
+    // Added for the Training Camp, in space the save already had free after the
+    // vanilla data. Old saves load it as zeros (save sectors are zero-filled and
+    // the checksum is a word sum), i.e. an empty camp.
+    /*0x83D0*/ struct TrainingCampMon trainingCamp;
 };
 
 extern struct PokemonStorage *gPokemonStoragePtr;

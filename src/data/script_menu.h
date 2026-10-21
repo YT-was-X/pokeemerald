@@ -795,6 +795,17 @@ static const struct MenuAction MultichoiceList_SoloMinigames[] =
     {gText_Exit},
 };
 
+// Order matches STAT_HP..STAT_SPDEF
+static const struct MenuAction MultichoiceList_TrainingCampStats[] =
+{
+    {gText_CampHP},
+    {gText_CampAttack},
+    {gText_CampDefense},
+    {gText_CampSpeed},
+    {gText_CampSpAtk},
+    {gText_CampSpDef},
+};
+
 static const struct MenuAction MultichoiceList_Exit[] =
 {
     {gText_Exit},
@@ -925,6 +936,7 @@ static const struct MultichoiceListStruct sMultichoiceLists[] =
     [MULTI_BUY_SELL_QUIT]              = MULTICHOICE(MultichoiceList_BuySellQuit),
     [MULTI_GAME_CORNER_PRIZE_TYPES]    = MULTICHOICE(MultichoiceList_GameCornerPrizeTypes),
     [MULTI_SOLO_MINIGAMES]             = MULTICHOICE(MultichoiceList_SoloMinigames),
+    [MULTI_TRAINING_CAMP_STATS]        = MULTICHOICE(MultichoiceList_TrainingCampStats),
 };
 
 const u8 *const gStdStrings[] =

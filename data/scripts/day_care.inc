@@ -11,11 +11,13 @@ Route117_EventScript_DaycareMan::
 	end
 
 Route117_EventScript_DaycareEggWaiting::
+	showmoneybox 0, 0
 	msgbox Route117_Text_DoYouWantEgg, MSGBOX_YESNO
 	goto_if_eq VAR_RESULT, YES, Route117_EventScript_DaycareAcceptEgg
 	msgbox Route117_Text_IWillKeepDoYouWantIt, MSGBOX_YESNO
 	goto_if_eq VAR_RESULT, YES, Route117_EventScript_DaycareAcceptEgg
 	msgbox Route117_Text_IllKeepIt, MSGBOX_DEFAULT
+	hidemoneybox
 	clearflag FLAG_PENDING_DAYCARE_EGG
 	special RejectEggFromDayCare
 	release
@@ -25,10 +27,18 @@ Route117_EventScript_DaycareAcceptEgg::
 	specialvar VAR_RESULT, CalculatePlayerPartyCount
 	goto_if_ne VAR_RESULT, PARTY_SIZE, Route117_EventScript_DaycareReceiveEgg
 	msgbox Route117_Text_YouHaveNoRoomForIt, MSGBOX_DEFAULT
+	hidemoneybox
 	release
 	end
 
 Route117_EventScript_DaycareReceiveEgg::
+	checkmoney DAYCARE_EGG_FEE
+	goto_if_eq VAR_RESULT, FALSE, Route117_EventScript_DaycareEggNoMoney
+	removemoney DAYCARE_EGG_FEE
+	updatemoneybox
+	playse SE_SHOP
+	waitse
+	hidemoneybox
 	message Route117_Text_ReceivedEgg
 	playfanfare MUS_LEVEL_UP
 	waitfanfare
@@ -36,6 +46,12 @@ Route117_EventScript_DaycareReceiveEgg::
 	msgbox Route117_Text_TakeGoodCareOfIt, MSGBOX_DEFAULT
 	special GiveEggFromDaycare
 	clearflag FLAG_PENDING_DAYCARE_EGG
+	release
+	end
+
+Route117_EventScript_DaycareEggNoMoney::
+	msgbox Route117_Text_EggFeeNotEnoughMoney, MSGBOX_DEFAULT
+	hidemoneybox
 	release
 	end
 
@@ -284,11 +300,16 @@ Route117_Text_DoYouWantEgg:
 	.string "Your POKéMON had an EGG!\p"
 	.string "We don't know how it got there,\n"
 	.string "but your POKéMON had it.\p"
+	.string "It's ¥300 for the EGG.\n"
 	.string "You do want it, yes?$"
 
 Route117_Text_YourMonIsDoingFine:
 	.string "Ah, it's you! Good to see you.\n"
 	.string "Your {STR_VAR_1}'s doing fine.$"
+
+Route117_Text_EggFeeNotEnoughMoney:
+	.string "Oh, you don't have ¥300…\n"
+	.string "I'll hold on to it until you do.$"
 
 Route117_Text_IllKeepIt:
 	.string "Well then, I'll keep it.\n"

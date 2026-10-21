@@ -562,3 +562,9 @@ gSpecials::
 	def_special PlaySoloPokemonJump, waitstate=1
 	def_special PlaySoloDodrioBerryPicking, waitstate=1
 	def_special PlaySoloBerryCrush, waitstate=1
+	def_special GetTrainingCampState
+	def_special CheckTrainingCampMon
+	def_special StoreMonInTrainingCamp
+	def_special BufferTrainingCampInfo
+	def_special BufferTrainingCampFee
+	def_special TakeMonFromTrainingCamp

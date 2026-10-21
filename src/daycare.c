@@ -210,7 +210,7 @@ static void ShiftDaycareSlots(struct DayCare *daycare)
     }
 }
 
-static void ApplyDaycareExperience(struct Pokemon *mon)
+void ApplyDaycareExperience(struct Pokemon *mon)
 {
     s32 i;
     bool8 firstMove;
@@ -243,19 +243,12 @@ static void ApplyDaycareExperience(struct Pokemon *mon)
 static u16 TakeSelectedPokemonFromDaycare(struct DaycareMon *daycareMon)
 {
     u16 species;
-    u32 experience;
     struct Pokemon pokemon;
 
     GetBoxMonNickname(&daycareMon->mon, gStringVar1);
     species = GetBoxMonData(&daycareMon->mon, MON_DATA_SPECIES);
     BoxMonToMon(&daycareMon->mon, &pokemon);
-
-    if (GetMonData(&pokemon, MON_DATA_LEVEL) != MAX_LEVEL)
-    {
-        experience = GetMonData(&pokemon, MON_DATA_EXP) + daycareMon->steps;
-        SetMonData(&pokemon, MON_DATA_EXP, &experience);
-        ApplyDaycareExperience(&pokemon);
-    }
+    // The Day Care only breeds; Pokémon don't gain EXP there (see the Training Camp)
 
     gPlayerParty[PARTY_SIZE - 1] = pokemon;
     if (daycareMon->mail.message.itemId)
@@ -283,13 +276,10 @@ u16 TakePokemonFromDaycare(void)
     return TakeSelectedPokemonMonFromDaycareShiftSlots(&gSaveBlock1Ptr->daycare, gSpecialVar_0x8004);
 }
 
+// Steps no longer give EXP in the Day Care, so the level never changes there
 static u8 GetLevelAfterDaycareSteps(struct BoxPokemon *mon, u32 steps)
 {
-    struct BoxPokemon tempMon = *mon;
-
-    u32 experience = GetBoxMonData(mon, MON_DATA_EXP) + steps;
-    SetBoxMonData(&tempMon, MON_DATA_EXP,  &experience);
-    return GetLevelFromBoxMonExp(&tempMon);
+    return GetLevelFromBoxMonExp(mon);
 }
 
 static u8 GetNumLevelsGainedFromSteps(struct DaycareMon *daycareMon)
@@ -314,9 +304,8 @@ static u32 PrepareDaycareCostStringForSelectedMon(struct DaycareMon *daycareMon)
 {
     u32 cost;
 
-    u8 numLevelsGained = GetNumLevelsGainedFromSteps(daycareMon);
     GetBoxMonNickname(&daycareMon->mon, gStringVar1);
-    cost = 100 + 100 * numLevelsGained;
+    cost = DAYCARE_PICKUP_FEE; // vanilla 100 + 100 per level gained
     ConvertIntToDecimalStringN(gStringVar2, cost, STR_CONV_MODE_LEFT_ALIGN, 5);
     return cost;
 }

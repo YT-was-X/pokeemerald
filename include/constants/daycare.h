@@ -2,6 +2,10 @@
 #define GUARD_DAYCARE_CONSTANTS_H
 
 // Parent compatibility scores
+// Day Care fees (the Day Care only breeds; the Training Camp levels Pokémon)
+#define DAYCARE_PICKUP_FEE 100 // per Pokémon taken back
+#define DAYCARE_EGG_FEE    300 // per Egg collected
+
 #define PARENTS_INCOMPATIBLE       0
 #define PARENTS_LOW_COMPATIBILITY  20
 #define PARENTS_MED_COMPATIBILITY  50

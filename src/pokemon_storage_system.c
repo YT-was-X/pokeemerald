@@ -1746,6 +1746,7 @@ void ResetPokemonStorageSystem(void)
         SetBoxWallpaper(boxId, boxId % (MAX_DEFAULT_WALLPAPER + 1));
 
     ResetWaldaWallpaper();
+    memset(&gPokemonStoragePtr->trainingCamp, 0, sizeof(gPokemonStoragePtr->trainingCamp));
 }
 
 

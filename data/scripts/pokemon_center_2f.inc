@@ -16,6 +16,119 @@ PokemonCenter_2F_EventScript_DaycareMan::
 	goto Route117_EventScript_DaycareMan
 	end
 
+@ Pokémon Training Camp coach (sits on the left stool by the bottom wall): trains one
+@ Pokémon at a time (EXP and optional EVs, src/training_camp.c); never makes Eggs
+PokemonCenter_2F_EventScript_TrainingCamp::
+	lock
+	faceplayer
+	specialvar VAR_RESULT, GetTrainingCampState
+	goto_if_eq VAR_RESULT, TRUE, PokemonCenter_2F_EventScript_CampOccupied
+	msgbox PokemonCenter_2F_Text_CampWelcome, MSGBOX_YESNO
+	goto_if_eq VAR_RESULT, NO, PokemonCenter_2F_EventScript_CampComeAgain
+	specialvar VAR_RESULT, CountPartyNonEggMons
+	goto_if_eq VAR_RESULT, 1, PokemonCenter_2F_EventScript_CampOnlyOneMon
+	msgbox PokemonCenter_2F_Text_CampWhichMon, MSGBOX_DEFAULT
+	fadescreen FADE_TO_BLACK
+	special ChooseSendDaycareMon
+	goto_if_eq VAR_0x8004, PARTY_NOTHING_CHOSEN, PokemonCenter_2F_EventScript_CampComeAgain
+	specialvar VAR_RESULT, CountPartyAliveNonEggMons_IgnoreVar0x8004Slot
+	goto_if_eq VAR_RESULT, 0, PokemonCenter_2F_EventScript_CampOnlyOneAliveMon
+	specialvar VAR_RESULT, CheckTrainingCampMon
+	goto_if_eq VAR_RESULT, TRAINING_CAMP_MON_HAS_MAIL, PokemonCenter_2F_EventScript_CampHasMail
+	specialvar VAR_0x8006, GetSelectedMonNicknameAndSpecies
+	setvar VAR_0x8005, TRAINING_CAMP_NO_EVS
+	msgbox PokemonCenter_2F_Text_CampTrainEvs, MSGBOX_YESNO
+	goto_if_eq VAR_RESULT, NO, PokemonCenter_2F_EventScript_CampStoreMon
+	message PokemonCenter_2F_Text_CampWhichStat
+	waitmessage
+	multichoice 0, 0, MULTI_TRAINING_CAMP_STATS, FALSE
+	goto_if_eq VAR_RESULT, MULTI_B_PRESSED, PokemonCenter_2F_EventScript_CampComeAgain
+	copyvar VAR_0x8005, VAR_RESULT
+PokemonCenter_2F_EventScript_CampStoreMon::
+	waitse
+	playmoncry VAR_0x8006, CRY_MODE_NORMAL
+	msgbox PokemonCenter_2F_Text_CampLeaveItToMe, MSGBOX_DEFAULT
+	waitmoncry
+	special StoreMonInTrainingCamp
+	release
+	end
+
+PokemonCenter_2F_EventScript_CampOccupied::
+	specialvar VAR_RESULT, BufferTrainingCampInfo
+	call_if_eq VAR_RESULT, TRUE, PokemonCenter_2F_EventScript_CampReportEvs
+	call_if_eq VAR_RESULT, FALSE, PokemonCenter_2F_EventScript_CampReportLevels
+	msgbox PokemonCenter_2F_Text_CampTakeItBack, MSGBOX_YESNO
+	goto_if_eq VAR_RESULT, NO, PokemonCenter_2F_EventScript_CampComeAgain
+	specialvar VAR_RESULT, CalculatePlayerPartyCount
+	goto_if_eq VAR_RESULT, PARTY_SIZE, PokemonCenter_2F_EventScript_CampPartyFull
+	special BufferTrainingCampFee
+	showmoneybox 0, 0
+	msgbox PokemonCenter_2F_Text_CampFee, MSGBOX_YESNO
+	goto_if_eq VAR_RESULT, NO, PokemonCenter_2F_EventScript_CampComeAgainHideMoney
+	specialvar VAR_RESULT, IsEnoughForCostInVar0x8005
+	goto_if_eq VAR_RESULT, FALSE, PokemonCenter_2F_EventScript_CampNotEnoughMoney
+	specialvar VAR_RESULT, TakeMonFromTrainingCamp
+	special SubtractMoneyFromVar0x8005
+	updatemoneybox
+	playse SE_SHOP
+	msgbox PokemonCenter_2F_Text_CampHeresYourMon, MSGBOX_DEFAULT
+	waitse
+	hidemoneybox
+	playmoncry VAR_RESULT, CRY_MODE_NORMAL
+	msgbox PokemonCenter_2F_Text_CampTookBackMon, MSGBOX_DEFAULT
+	waitmoncry
+	release
+	end
+
+PokemonCenter_2F_EventScript_CampReportEvs::
+	msgbox PokemonCenter_2F_Text_CampReportEvs, MSGBOX_DEFAULT
+	return
+
+PokemonCenter_2F_EventScript_CampReportLevels::
+	msgbox PokemonCenter_2F_Text_CampReportLevels, MSGBOX_DEFAULT
+	return
+
+PokemonCenter_2F_EventScript_CampOnlyOneMon::
+	msgbox PokemonCenter_2F_Text_CampOnlyOneMon, MSGBOX_DEFAULT
+	release
+	end
+
+PokemonCenter_2F_EventScript_CampOnlyOneAliveMon::
+	msgbox PokemonCenter_2F_Text_CampOnlyOneAliveMon, MSGBOX_DEFAULT
+	release
+	end
+
+PokemonCenter_2F_EventScript_CampHasMail::
+	msgbox PokemonCenter_2F_Text_CampHasMail, MSGBOX_DEFAULT
+	release
+	end
+
+PokemonCenter_2F_EventScript_CampPartyFull::
+	msgbox PokemonCenter_2F_Text_CampPartyFull, MSGBOX_DEFAULT
+	release
+	end
+
+PokemonCenter_2F_EventScript_CampNotEnoughMoney::
+	msgbox PokemonCenter_2F_Text_CampNotEnoughMoney, MSGBOX_DEFAULT
+	hidemoneybox
+	release
+	end
+
+PokemonCenter_2F_EventScript_CampComeAgainHideMoney::
+	hidemoneybox
+PokemonCenter_2F_EventScript_CampComeAgain::
+	msgbox PokemonCenter_2F_Text_CampComeAgain, MSGBOX_DEFAULT
+	release
+	end
+
+@ Move Tutor (sits beside the camp coach): the Fallarbor Move Relearner's service
+PokemonCenter_2F_EventScript_MoveRelearner::
+	lock
+	faceplayer
+	msgbox PokemonCenter_2F_Text_MoveRelearnerIntro, MSGBOX_DEFAULT
+	goto FallarborTown_MoveRelearnersHouse_EventScript_AskTeachMove
+	end
+
 @ Gift Pokémon terminal
 PokemonCenter_2F_EventScript_GiftTerminal::
 	lock
@@ -285,9 +398,9 @@ PokemonCenter_2F_Text_TourCounters:
 	.string "The counter on the left is linked\n"
 	.string "to the POKéMON DAY CARE on\l"
 	.string "ROUTE 117.\p"
-	.string "The DAY-CARE LADY will raise your\n"
-	.string "POKéMON, and the DAY-CARE MAN will\l"
-	.string "give you any EGGS they find.\p"
+	.string "Leave two POKéMON with the\n"
+	.string "DAY-CARE LADY, and the DAY-CARE\l"
+	.string "MAN will give you any EGGS.\p"
 	.string "There's no need to go all the way\n"
 	.string "to ROUTE 117.\p"
 	.string "The middle counter is mine.\n"
@@ -306,7 +419,11 @@ PokemonCenter_2F_Text_TourCounters:
 	.string "Please be careful over there.\p"
 	.string "Oh, and the boy on the right\n"
 	.string "always wants someone to play\l"
-	.string "WIRELESS minigames with him.$"
+	.string "WIRELESS minigames with him.\p"
+	.string "The coach on the stools by the\n"
+	.string "wall runs a POKéMON TRAINING CAMP.\p"
+	.string "The MOVE TUTOR beside him can\n"
+	.string "teach moves for a HEART SCALE.$"
 
 PokemonCenter_2F_Text_MinigameWelcome:
 	.string "Hi! My friends and I play the\n"
@@ -452,3 +569,77 @@ PokemonCenter_2F_Text_GruntCantSellMail:
 PokemonCenter_2F_Text_GruntCantSellBagFull:
 	.string "Your BAG can't fit its {STR_VAR_3}.\n"
 	.string "Make some room first.$"
+
+PokemonCenter_2F_Text_CampWelcome:
+	.string "Hey there! I run the POKéMON\n"
+	.string "TRAINING CAMP!\p"
+	.string "I train one POKéMON at a time.\n"
+	.string "It earns EXP. as you walk, and it\l"
+	.string "can work on one stat's EVs, too.\p"
+	.string "It's ¥100, plus ¥100 for each level\n"
+	.string "and ¥5 for each EV it gains.\p"
+	.string "Want me to train one of yours?$"
+
+PokemonCenter_2F_Text_CampWhichMon:
+	.string "Which POKéMON should I train?$"
+
+PokemonCenter_2F_Text_CampTrainEvs:
+	.string "Should {STR_VAR_1} train its\n"
+	.string "EVs, too?$"
+
+PokemonCenter_2F_Text_CampWhichStat:
+	.string "Which stat should it train?$"
+
+PokemonCenter_2F_Text_CampLeaveItToMe:
+	.string "Leave {STR_VAR_1} to me!\n"
+	.string "I'll whip it into shape!$"
+
+PokemonCenter_2F_Text_CampReportEvs:
+	.string "Your {STR_VAR_1}'s training hard!\p"
+	.string "It's grown by {STR_VAR_2} level(s) and\n"
+	.string "gained {STR_VAR_3} EVs.$"
+
+PokemonCenter_2F_Text_CampReportLevels:
+	.string "Your {STR_VAR_1}'s training hard!\p"
+	.string "It's grown by {STR_VAR_2} level(s).$"
+
+PokemonCenter_2F_Text_CampTakeItBack:
+	.string "Do you want to take it back?$"
+
+PokemonCenter_2F_Text_CampFee:
+	.string "That'll be ¥{STR_VAR_2} for\n"
+	.string "{STR_VAR_1}'s training. OK?$"
+
+PokemonCenter_2F_Text_CampHeresYourMon:
+	.string "Thanks!\n"
+	.string "Here's your POKéMON.$"
+
+PokemonCenter_2F_Text_CampTookBackMon:
+	.string "{PLAYER} took back {STR_VAR_1}\n"
+	.string "from the TRAINING CAMP.$"
+
+PokemonCenter_2F_Text_CampOnlyOneMon:
+	.string "You've only got one POKéMON!\n"
+	.string "Who would you travel with?$"
+
+PokemonCenter_2F_Text_CampOnlyOneAliveMon:
+	.string "Then you'd have no POKéMON that\n"
+	.string "can battle!$"
+
+PokemonCenter_2F_Text_CampHasMail:
+	.string "Please take the MAIL off it first.$"
+
+PokemonCenter_2F_Text_CampPartyFull:
+	.string "Your team's full.\n"
+	.string "Make room, then come see me.$"
+
+PokemonCenter_2F_Text_CampNotEnoughMoney:
+	.string "You don't have enough money…$"
+
+PokemonCenter_2F_Text_CampComeAgain:
+	.string "Come back anytime!$"
+
+PokemonCenter_2F_Text_MoveRelearnerIntro:
+	.string "I'm the MOVE TUTOR.\p"
+	.string "For a HEART SCALE, I'll teach a\n"
+	.string "POKéMON a move it could've learned.$"
