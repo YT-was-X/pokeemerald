@@ -556,3 +556,6 @@ gSpecials::
 	def_special ShowFossilChoiceMenu
 	def_special HandFossilToResearcher
 	def_special GetRevivedFossilSpecies
+	def_special ShowGameCornerPrizeMenu
+	def_special BufferGameCornerPrizeInfo
+	def_special TryBuyGameCornerPrize

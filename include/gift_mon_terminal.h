@@ -10,6 +10,8 @@ struct ShopListEntry
 };
 
 void ShowShopListMenu(const struct ShopListEntry *entries, u32 numEntries);
+void ShowShopListMenuCoins(const struct ShopListEntry *entries, u32 numEntries);
 u16 BuyMonForPlayer(u16 species, u8 level, u32 price, bool8 fatefulEncounter);
+u16 GiveBoughtMonToPlayer(u16 species, u8 level, bool8 fatefulEncounter);
 
 #endif // GUARD_GIFT_MON_TERMINAL_H

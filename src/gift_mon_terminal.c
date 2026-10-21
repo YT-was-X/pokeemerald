@@ -115,8 +115,10 @@ static const struct GiftItem sGiftItems[] =
 static EWRAM_DATA struct ListMenuItem *sListItems = NULL;
 static EWRAM_DATA struct ShopListEntry *sShopEntries = NULL;
 static EWRAM_DATA u16 sScrollOffset = 0;
+static EWRAM_DATA bool8 sShopPricesInCoins = FALSE;
 
 static void Task_ShopListMenu(u8 taskId);
+static void ShowShopListMenuInternal(const struct ShopListEntry *entries, u32 numEntries);
 static void PrintShopListPrice(u8 windowId, u32 itemId, u8 y);
 
 static bool8 IsUnlocked(u8 unlock)
@@ -187,6 +189,19 @@ void ShowGiftMonTerminalMenu(void)
 // entry's id, or MULTI_B_PRESSED. The script must waitstate after it.
 void ShowShopListMenu(const struct ShopListEntry *entries, u32 numEntries)
 {
+    sShopPricesInCoins = FALSE;
+    ShowShopListMenuInternal(entries, numEntries);
+}
+
+// Same, with prices in Game Corner coins
+void ShowShopListMenuCoins(const struct ShopListEntry *entries, u32 numEntries)
+{
+    sShopPricesInCoins = TRUE;
+    ShowShopListMenuInternal(entries, numEntries);
+}
+
+static void ShowShopListMenuInternal(const struct ShopListEntry *entries, u32 numEntries)
+{
     static const struct ScrollArrowsTemplate sArrowsTemplate = {
         .firstArrowType = SCROLL_ARROW_UP,
         .firstX = (MENU_LEFT + MENU_WIDTH / 2) * 8 + 4,
@@ -248,6 +263,8 @@ void ShowShopListMenu(const struct ShopListEntry *entries, u32 numEntries)
     CopyWindowToVram(task->tWindowId, COPYWIN_FULL);
 }
 
+static const u8 sText_CoinsVar1[] = _("{STR_VAR_1}C");
+
 static void PrintShopListPrice(u8 windowId, u32 itemId, u8 y)
 {
     u8 price[16];
@@ -255,7 +272,10 @@ static void PrintShopListPrice(u8 windowId, u32 itemId, u8 y)
     if (itemId == LIST_CANCEL || sShopEntries[itemId].price == 0)
         return;
     ConvertIntToDecimalStringN(gStringVar1, sShopEntries[itemId].price, STR_CONV_MODE_LEFT_ALIGN, 6);
-    StringExpandPlaceholders(price, gText_PokedollarVar1);
+    if (sShopPricesInCoins)
+        StringExpandPlaceholders(price, sText_CoinsVar1);
+    else
+        StringExpandPlaceholders(price, gText_PokedollarVar1);
     AddTextPrinterParameterized(windowId, FONT_NARROW, price,
                                 GetStringRightAlignXOffset(FONT_NARROW, price, MENU_PRICE_X), y, TEXT_SKIP_DRAW, NULL);
 }
@@ -354,11 +374,23 @@ void TryBuyGiftMon(void)
 // Charges the price and gives the player a new Pokémon. Returns a GIFT_MON_* result.
 u16 BuyMonForPlayer(u16 species, u8 level, u32 price, bool8 fatefulEncounter)
 {
-    struct Pokemon mon;
-    u16 result, dexNum;
+    u16 result;
 
     if (!IsEnoughMoney(&gSaveBlock1Ptr->money, price))
         return GIFT_MON_NO_MONEY;
+
+    result = GiveBoughtMonToPlayer(species, level, fatefulEncounter);
+    if (result != GIFT_MON_NO_ROOM)
+        RemoveMoney(&gSaveBlock1Ptr->money, price);
+    return result;
+}
+
+// Gives the player a new Pokémon (party, else PC) and registers it in the Pokédex.
+// Returns GIFT_MON_BOUGHT_PARTY, GIFT_MON_BOUGHT_PC or GIFT_MON_NO_ROOM.
+u16 GiveBoughtMonToPlayer(u16 species, u8 level, bool8 fatefulEncounter)
+{
+    struct Pokemon mon;
+    u16 result, dexNum;
 
     // Shiny rolls apply, as for any Pokémon created for the player
     CreateMon(&mon, species, level, USE_RANDOM_IVS, FALSE, 0, OT_ID_PLAYER_ID, 0);
@@ -377,7 +409,6 @@ u16 BuyMonForPlayer(u16 species, u8 level, u32 price, bool8 fatefulEncounter)
         return GIFT_MON_NO_ROOM;
     }
 
-    RemoveMoney(&gSaveBlock1Ptr->money, price);
     dexNum = SpeciesToNationalPokedexNum(species);
     GetSetPokedexFlag(dexNum, FLAG_SET_SEEN);
     GetSetPokedexFlag(dexNum, FLAG_SET_CAUGHT);
