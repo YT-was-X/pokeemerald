@@ -298,7 +298,7 @@ PokemonCenter_2F_Text_TourCounters:
 	.string "The POKéMON CENTER can't say\n"
 	.string "where they come from…\p"
 	.string "Please be careful over there.\p"
-	.string "Oh, and the boy by the window\n"
+	.string "Oh, and the boy on the right\n"
 	.string "always wants someone to play\l"
 	.string "WIRELESS minigames with him.$"
 
