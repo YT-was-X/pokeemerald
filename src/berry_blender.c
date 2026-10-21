@@ -237,6 +237,10 @@ static void PrintMadePokeblockString(struct Pokeblock *, u8 *);
 static bool32 TryAddContestLinkTvShow(struct Pokeblock *, struct TvBlenderStruct *);
 
 EWRAM_DATA static struct BerryBlender *sBerryBlender = NULL;
+// Which NPC (BLENDER_*) plays as each local player; 0 is the player
+EWRAM_DATA static u8 sOpponentKinds[BLENDER_MAX_PLAYERS] = {0};
+// TRUE if the Blend Master joins a blender with 2 or 3 NPCs (gSpecialVar_0x8005)
+EWRAM_DATA static bool8 sBlendMasterJoins = FALSE;
 EWRAM_DATA static s32 sDebug_PokeblockFactorFlavors[FLAVOR_COUNT] = {0};
 EWRAM_DATA static s32 sDebug_PokeblockFactorFlavorsAfterRPM[FLAVOR_COUNT] = {0};
 EWRAM_DATA static u32 sDebug_PokeblockFactorRPM = 0;
@@ -271,6 +275,23 @@ static const u8 sText_Lassie[] = _("LASSIE");
 static const u8 sText_Master[] = _("MASTER");
 static const u8 sText_Dude[] = _("DUDE");
 static const u8 sText_Miss[] = _("MISS");
+
+// How much each NPC partner raises the Pokéblock's RPM factor (vanilla: maxRPM / 333 + 100).
+// The blend uses at least 100 + the NPCs' total (three decent NPCs reach "perfect"),
+// or with the Blend Master, at least BLEND_PERFECT_FACTOR + 3/5 of the other NPCs'
+// average skill (a good partner pushes further past perfect than a weak one).
+// Faster real blending still counts.
+#define BLEND_PERFECT_FACTOR 150
+
+static const u8 sBlenderOpponentSkill[] =
+{
+    [BLENDER_MISTER] = 30,
+    [BLENDER_LADDIE] = 15,
+    [BLENDER_LASSIE] = 15,
+    [BLENDER_MASTER] = BLEND_PERFECT_FACTOR - 100,
+    [BLENDER_DUDE]   = 25,
+    [BLENDER_MISS]   = 20,
+};
 
 static const u8 *const sBlenderOpponentsNames[] =
 {
@@ -1053,6 +1074,7 @@ void DoBerryBlending(void)
     sBerryBlender->mainState = 0;
     sBerryBlender->gameEndState = 0;
 
+    sBlendMasterJoins = (gSpecialVar_0x8004 >= 2 && gSpecialVar_0x8005 == TRUE);
     InitLocalPlayers(gSpecialVar_0x8004);
     SetMainCallback2(CB2_LoadBerryBlender);
 }
@@ -1223,48 +1245,38 @@ static void ConvertItemToBlenderBerry(struct BlenderBerry *berry, u16 itemId)
 
 static void InitLocalPlayers(u8 opponentsNum)
 {
+    u32 i;
+
     switch (opponentsNum)
     {
     case 0: // Link games have 0 in-game opponents
         gInGameOpponentsNo = 0;
-        break;
+        return;
     case 1:
-        gInGameOpponentsNo = 1;
-        sBerryBlender->numPlayers = 2;
-        StringCopy(gLinkPlayers[0].name, gSaveBlock2Ptr->playerName);
-
         if (!FlagGet(FLAG_HIDE_LILYCOVE_CONTEST_HALL_BLEND_MASTER))
-            StringCopy(gLinkPlayers[1].name, sBlenderOpponentsNames[BLENDER_MASTER]);
+            sOpponentKinds[1] = BLENDER_MASTER;
         else
-            StringCopy(gLinkPlayers[1].name, sBlenderOpponentsNames[BLENDER_MISTER]);
-
-        gLinkPlayers[0].language = GAME_LANGUAGE;
-        gLinkPlayers[1].language = GAME_LANGUAGE;
+            sOpponentKinds[1] = BLENDER_MISTER;
         break;
     case 2:
-        gInGameOpponentsNo = 2;
-        sBerryBlender->numPlayers = 3;
-        StringCopy(gLinkPlayers[0].name, gSaveBlock2Ptr->playerName);
-        StringCopy(gLinkPlayers[1].name, sBlenderOpponentsNames[BLENDER_DUDE]);
-        StringCopy(gLinkPlayers[2].name, sBlenderOpponentsNames[BLENDER_LASSIE]);
-
-        gLinkPlayers[0].language = GAME_LANGUAGE;
-        gLinkPlayers[1].language = GAME_LANGUAGE;
-        gLinkPlayers[2].language = GAME_LANGUAGE;
+        sOpponentKinds[1] = BLENDER_DUDE;
+        sOpponentKinds[2] = sBlendMasterJoins ? BLENDER_MASTER : BLENDER_LASSIE;
         break;
     case 3:
-        gInGameOpponentsNo = 3;
-        sBerryBlender->numPlayers = 4;
-        StringCopy(gLinkPlayers[0].name, gSaveBlock2Ptr->playerName);
-        StringCopy(gLinkPlayers[1].name, sBlenderOpponentsNames[BLENDER_MISS]);
-        StringCopy(gLinkPlayers[2].name, sBlenderOpponentsNames[BLENDER_LADDIE]);
-        StringCopy(gLinkPlayers[3].name, sBlenderOpponentsNames[BLENDER_LASSIE]);
-
-        gLinkPlayers[0].language = GAME_LANGUAGE;
-        gLinkPlayers[1].language = GAME_LANGUAGE;
-        gLinkPlayers[2].language = GAME_LANGUAGE;
-        gLinkPlayers[3].language = GAME_LANGUAGE;
+        sOpponentKinds[1] = sBlendMasterJoins ? BLENDER_MASTER : BLENDER_MISS;
+        sOpponentKinds[2] = BLENDER_LADDIE;
+        sOpponentKinds[3] = BLENDER_LASSIE;
         break;
+    }
+
+    gInGameOpponentsNo = opponentsNum;
+    sBerryBlender->numPlayers = opponentsNum + 1;
+    StringCopy(gLinkPlayers[0].name, gSaveBlock2Ptr->playerName);
+    gLinkPlayers[0].language = GAME_LANGUAGE;
+    for (i = 1; i <= opponentsNum; i++)
+    {
+        StringCopy(gLinkPlayers[i].name, sBlenderOpponentsNames[sOpponentKinds[i]]);
+        gLinkPlayers[i].language = GAME_LANGUAGE;
     }
 }
 
@@ -1565,10 +1577,9 @@ static void SetOpponentsBerryData(u16 playerBerryItemId, u8 playersNum, struct B
     {
         opponentBerryId = sOpponentBerrySets[opponentSetId][i];
         berryMasterDiff = ITEM_TO_BERRY(playerBerryItemId) - ITEM_TO_BERRY(ITEM_SPELON_BERRY);
-        if (!FlagGet(FLAG_HIDE_LILYCOVE_CONTEST_HALL_BLEND_MASTER) && gSpecialVar_0x8004 == 1)
+        if (sOpponentKinds[i + 1] == BLENDER_MASTER)
         {
-            opponentSetId %= ARRAY_COUNT(sBerryMasterBerries);
-            opponentBerryId = sBerryMasterBerries[opponentSetId];
+            opponentBerryId = sBerryMasterBerries[opponentSetId % ARRAY_COUNT(sBerryMasterBerries)];
 
             // If the player's berry is any of the Berry Master's berries,
             // then use the next lower set of berries
@@ -1773,18 +1784,17 @@ static void CB2_StartBlenderLocal(void)
         sBerryBlender->slowdownTimer = 0;
         SetMainCallback2(CB2_PlayBlender);
 
-        if (gSpecialVar_0x8004 == 1)
+        for (i = 0; i < gSpecialVar_0x8004; i++)
         {
-            if (!FlagGet(FLAG_HIDE_LILYCOVE_CONTEST_HALL_BLEND_MASTER))
-                sBerryBlender->opponentTaskIds[0] = CreateTask(Task_HandleBerryMaster, 10);
+            if (sOpponentKinds[i + 1] == BLENDER_MASTER)
+            {
+                sBerryBlender->opponentTaskIds[i] = CreateTask(Task_HandleBerryMaster, 10 + i);
+                gTasks[sBerryBlender->opponentTaskIds[i]].data[1] = i + 1; // player id
+            }
             else
-                sBerryBlender->opponentTaskIds[0] = CreateTask(sLocalOpponentTasks[0], 10);
-        }
-
-        if (gSpecialVar_0x8004 > 1)
-        {
-            for (i = 0; i < gSpecialVar_0x8004; i++)
+            {
                 sBerryBlender->opponentTaskIds[i] = CreateTask(sLocalOpponentTasks[i], 10 + i);
+            }
         }
 
         if (GetCurrentMapMusic() != MUS_CYCLING)
@@ -1987,13 +1997,16 @@ static void Task_HandleOpponent3(u8 taskId)
     }
 }
 
+// data[1] is the Blend Master's player id
 static void Task_HandleBerryMaster(u8 taskId)
 {
-    if (GetArrowProximity(sBerryBlender->arrowPos, 1) == PROXIMITY_BEST)
+    u8 playerId = gTasks[taskId].data[1];
+
+    if (GetArrowProximity(sBerryBlender->arrowPos, playerId) == PROXIMITY_BEST)
     {
         if (!gTasks[taskId].tDidInput)
         {
-            gRecvCmds[1][BLENDER_COMM_SCORE] = LINKCMD_BLENDER_SCORE_BEST;
+            gRecvCmds[playerId][BLENDER_COMM_SCORE] = LINKCMD_BLENDER_SCORE_BEST;
             gTasks[taskId].tDidInput = TRUE;
         }
     }
@@ -3437,6 +3450,36 @@ static void SpriteCB_PlayerArrow(struct Sprite *sprite)
    sprite->y2 = -(sBerryBlender->bg_Y);
 }
 
+// Raises maxRPM to the minimum the NPC partners guarantee (see sBlenderOpponentSkill)
+static void ApplyOpponentBlendBoost(void)
+{
+    u32 i, others = 0, numOthers = 0, factor;
+    bool32 hasMaster = FALSE;
+
+    for (i = 1; i <= gInGameOpponentsNo; i++)
+    {
+        if (sOpponentKinds[i] == BLENDER_MASTER)
+        {
+            hasMaster = TRUE;
+        }
+        else
+        {
+            others += sBlenderOpponentSkill[sOpponentKinds[i]];
+            numOthers++;
+        }
+    }
+
+    if (!hasMaster)
+        factor = 100 + others;
+    else if (numOthers == 0)
+        factor = BLEND_PERFECT_FACTOR;
+    else
+        factor = BLEND_PERFECT_FACTOR + (others * 3) / (5 * numOthers);
+
+    if (sBerryBlender->maxRPM < (factor - 100) * 333)
+        sBerryBlender->maxRPM = (factor - 100) * 333;
+}
+
 static void TryUpdateBerryBlenderRecord(void)
 {
     if (gSaveBlock1Ptr->berryBlenderRecords[sBerryBlender->numPlayers - 2] < sBerryBlender->maxRPM)
@@ -3481,6 +3524,9 @@ static bool8 PrintBlendingResults(void)
         {
             u16 minutes, seconds;
             u8 *txtPtr;
+
+            if (gInGameOpponentsNo != 0)
+                ApplyOpponentBlendBoost();
 
             xPos = GetStringCenterAlignXOffset(FONT_NORMAL, sText_BlendingResults, 0xA8);
             Blender_AddTextPrinter(WIN_RESULTS, sText_BlendingResults, xPos, 1, TEXT_SKIP_DRAW, 0);

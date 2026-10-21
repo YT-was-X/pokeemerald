@@ -1,4 +1,5 @@
 .set NUM_OPPONENTS, VAR_0x8009
+.set BLEND_MASTER_JOINS, VAR_0x800A  @ TRUE if the Blend Master joins blender 2 or 3
 
 BerryBlender_Text_WantToMakePokeblocks:
 	.string "Oh? Did you want to make some {POKEBLOCK}S\n"
@@ -165,6 +166,14 @@ BerryBlender_Text_SetNewBlenderRecord:
 	.string "Okay! Today's going to be the day that\n"
 	.string "I set a new BLENDER speed record!$"
 
+BerryBlender_Text_BlendMasterOffersToJoin:
+	.string "BLEND MASTER: Hohoho!\n"
+	.string "May this old-timer join your blend?$"
+
+BerryBlender_Text_BlendMasterJoins:
+	.string "BLEND MASTER: Splendid!\n"
+	.string "Behold my mastery!$"
+
 BerryBlender_Text_LookGoodAtBlendingJoinUs:
 	.string "Oh, dear!\n"
 	.string "You look as if you're good at blending.\l"
@@ -236,6 +245,7 @@ BerryBlender_Text_DontHaveAnyBerriesNoneToSpare:
 
 BerryBlender_EventScript_BerryBlender1::
 	lockall
+	setvar BLEND_MASTER_JOINS, FALSE
 	goto_if_unset FLAG_HIDE_LILYCOVE_CONTEST_HALL_BLEND_MASTER, BerryBlender_EventScript_BlendMasterPresent
 	setvar NUM_OPPONENTS, 1
 	applywaitmovement LOCALID_BLEND_MASTER, BerryBlender_Movement_BlendLeaderWalkInPlace
@@ -297,6 +307,7 @@ BerryBlender_EventScript_TryUseBerryBlender1:
 
 BerryBlender_EventScript_DoBerryBlending:
 	copyvar VAR_0x8004, NUM_OPPONENTS
+	copyvar VAR_0x8005, BLEND_MASTER_JOINS
 	fadescreen FADE_TO_BLACK
 	special DoBerryBlending
 	releaseall
@@ -315,13 +326,25 @@ BerryBlender_EventScript_Blender1NoCase:
 BerryBlender_EventScript_BerryBlender2::
 	lockall
 	setvar NUM_OPPONENTS, 2
+	setvar BLEND_MASTER_JOINS, FALSE
 	applymovement LOCALID_CONTEST_LOBBY_BLENDER_2_PARTICIPANT, Common_Movement_FaceOriginalDirection
 	applymovement LOCALID_CONTEST_LOBBY_BLENDER_2_LEADER, BerryBlender_Movement_BlendLeaderWalkInPlace
 	waitmovement 0
 	msgbox BerryBlender_Text_WantToBlendPokeblocksWithUs, MSGBOX_YESNO
-	goto_if_eq VAR_RESULT, YES, BerryBlender_EventScript_TryUseBerryBlender2
-	goto BerryBlender_EventScript_DeclineBlender2
+	goto_if_eq VAR_RESULT, NO, BerryBlender_EventScript_DeclineBlender2
+	call BerryBlender_EventScript_TryAddBlendMaster
+	goto BerryBlender_EventScript_TryUseBerryBlender2
 	end
+
+@ On days the Blend Master is in the lobby, he can also join blender 2 or 3
+BerryBlender_EventScript_TryAddBlendMaster::
+	goto_if_set FLAG_HIDE_LILYCOVE_CONTEST_HALL_BLEND_MASTER, BerryBlender_EventScript_TryAddBlendMasterEnd
+	msgbox BerryBlender_Text_BlendMasterOffersToJoin, MSGBOX_YESNO
+	goto_if_eq VAR_RESULT, NO, BerryBlender_EventScript_TryAddBlendMasterEnd
+	setvar BLEND_MASTER_JOINS, TRUE
+	msgbox BerryBlender_Text_BlendMasterJoins, MSGBOX_DEFAULT
+BerryBlender_EventScript_TryAddBlendMasterEnd:
+	return
 
 BerryBlender_EventScript_DeclineBlender2:
 	msgbox BerryBlender_Text_ThatsTooBad, MSGBOX_DEFAULT
@@ -374,13 +397,15 @@ BerryBlender_EventScript_BerryBlender3::
 	lockall
 	setvar VAR_0x8008, LOCALID_CONTEST_LOBBY_BLENDER_3_LEADER
 	setvar NUM_OPPONENTS, 3
+	setvar BLEND_MASTER_JOINS, FALSE
 	applymovement LOCALID_CONTEST_LOBBY_BLENDER_3_PARTICIPANT_1, Common_Movement_FaceOriginalDirection
 	applymovement LOCALID_CONTEST_LOBBY_BLENDER_3_PARTICIPANT_2, Common_Movement_FaceOriginalDirection
 	applymovement VAR_0x8008, BerryBlender_Movement_BlendLeaderWalkInPlace
 	waitmovement 0
 	msgbox BerryBlender_Text_LookGoodAtBlendingJoinUs, MSGBOX_YESNO
-	goto_if_eq VAR_RESULT, YES, BerryBlender_EventScript_TryUseBlender3
-	goto BerryBlender_EventScript_DeclineBlender3
+	goto_if_eq VAR_RESULT, NO, BerryBlender_EventScript_DeclineBlender3
+	call BerryBlender_EventScript_TryAddBlendMaster
+	goto BerryBlender_EventScript_TryUseBlender3
 	end
 
 BerryBlender_EventScript_DeclineBlender3:
