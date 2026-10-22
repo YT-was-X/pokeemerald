@@ -854,7 +854,7 @@ u32 FldEff_UnusedGrass(void)
         sprite->oam.priority = gFieldEffectArguments[3];
         sprite->sWaitFldEff = FLDEFF_UNUSED_GRASS;
     }
-    return 0;
+    return spriteId;
 }
 
 u32 FldEff_UnusedGrass2(void)
@@ -870,7 +870,7 @@ u32 FldEff_UnusedGrass2(void)
         sprite->oam.priority = gFieldEffectArguments[3];
         sprite->sWaitFldEff = FLDEFF_UNUSED_GRASS_2;
     }
-    return 0;
+    return spriteId;
 }
 
 u32 FldEff_UnusedSand(void)
@@ -886,7 +886,7 @@ u32 FldEff_UnusedSand(void)
         sprite->oam.priority = gFieldEffectArguments[3];
         sprite->sWaitFldEff = FLDEFF_UNUSED_SAND;
     }
-    return 0;
+    return spriteId;
 }
 
 u32 FldEff_WaterSurfacing(void)
@@ -902,7 +902,23 @@ u32 FldEff_WaterSurfacing(void)
         sprite->oam.priority = gFieldEffectArguments[3];
         sprite->sWaitFldEff = FLDEFF_WATER_SURFACING;
     }
-    return 0;
+    return spriteId;
+}
+
+u32 FldEff_CaveDust(void)
+{
+    u8 spriteId;
+
+    SetSpritePosToOffsetMapCoords((s16 *)&gFieldEffectArguments[0], (s16 *)&gFieldEffectArguments[1], 8, 8);
+    spriteId = CreateSpriteAtEnd(gFieldEffectObjectTemplatePointers[FLDEFFOBJ_CAVE_DUST], gFieldEffectArguments[0], gFieldEffectArguments[1], gFieldEffectArguments[2]);
+    if (spriteId != MAX_SPRITES)
+    {
+        struct Sprite *sprite = &gSprites[spriteId];
+        sprite->coordOffsetEnabled = TRUE;
+        sprite->oam.priority = gFieldEffectArguments[3];
+        sprite->sWaitFldEff = FLDEFF_CAVE_DUST;
+    }
+    return spriteId;
 }
 
 // Sprite data for FLDEFF_ASH

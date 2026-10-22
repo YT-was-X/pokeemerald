@@ -612,5 +612,11 @@ extern const u8 EventScript_TradeCenter_Chair0[];
 extern const u8 EventScript_ConfirmLeaveCableClubRoom[];
 extern const u8 EventScript_TerminateLink[];
 extern const u8 EventScript_UseVsSeeker[];
+extern const u8 EventScript_StartDexNavBattle[];
+extern const u8 EventScript_DexNavNotFoundNearby[];
+extern const u8 EventScript_DexNavMovedTooFast[];
+extern const u8 EventScript_DexNavGotAway[];
+extern const u8 EventScript_DexNavLostSignal[];
+extern const u8 EventScript_DexNavTooDark[];
 
 #endif // GUARD_EVENT_SCRIPTS_H

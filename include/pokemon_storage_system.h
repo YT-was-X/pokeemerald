@@ -25,6 +25,14 @@ struct TrainingCampMon
     u8 padding[3];
 };
 
+// DexNav progress (src/dexnav.c)
+struct DexNavData
+{
+    u8 searchLevels[NUM_SPECIES]; // DexNav battles won or caught per species, max 255
+    u8 chain;                     // DexNav battles won or caught in a row
+    u8 padding[3];
+};
+
 struct PokemonStorage
 {
     /*0x0000*/ u8 currentBox;
@@ -35,6 +43,8 @@ struct PokemonStorage
     // vanilla data. Old saves load it as zeros (save sectors are zero-filled and
     // the checksum is a word sum), i.e. an empty camp.
     /*0x83D0*/ struct TrainingCampMon trainingCamp;
+    // Added for the DexNav, same free space; old saves load it as zeros.
+    /*0x8428*/ struct DexNavData dexNav;
 };
 
 extern struct PokemonStorage *gPokemonStoragePtr;

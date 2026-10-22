@@ -10,6 +10,7 @@
 #include "battle_setup.h"
 #include "battle_tower.h"
 #include "data.h"
+#include "dexnav.h"
 #include "event_data.h"
 #include "evolution_scene.h"
 #include "field_specials.h"
@@ -2279,6 +2280,9 @@ u32 GetShinyRolls(void)
 
     if (Random() % NUM_BADGES < CountBadges())
         rolls++;
+
+    // DexNav chain and search level bonus (DexNav Pokémon only)
+    rolls += GetDexNavShinyRolls();
 
     return rolls;
 }
@@ -6806,6 +6810,10 @@ static s32 GetWildMonTableIdInAlteringCave(u16 species)
 
 void SetWildMonHeldItem(void)
 {
+    // The DexNav already picked its Pokémon's item
+    if (gDexNavSpecies != SPECIES_NONE)
+        return;
+
     if (!(gBattleTypeFlags & (BATTLE_TYPE_LEGENDARY | BATTLE_TYPE_TRAINER | BATTLE_TYPE_PYRAMID | BATTLE_TYPE_PIKE)))
     {
         u16 rnd = Random() % 100;

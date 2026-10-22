@@ -661,6 +661,7 @@ EventScript_SetBrineyLocation_Route109::
 	.include "data/scripts/pkmn_center_nurse.inc"
 	.include "data/scripts/new_game_plus.inc"
 	.include "data/scripts/vs_seeker.inc"
+	.include "data/scripts/dexnav.inc"
 	.include "data/scripts/pokemon_center_2f.inc"
 	.include "data/scripts/obtain_item.inc"
 	.include "data/scripts/record_mix.inc"

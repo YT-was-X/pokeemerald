@@ -490,7 +490,11 @@ u8 GetPlayerTextSpeedDelay(void)
 u8 AddStartMenuWindow(u8 numActions)
 {
     if (sStartMenuWindowId == WINDOW_NONE)
-        sStartMenuWindowId = AddWindowParameterized(0, 22, 1, 7, (numActions * 2) + 2, 15, 0x139);
+    {
+        // Rows are 2 tiles; up to START_MENU_MAX_PADDED_ACTIONS get a tile of padding above and below
+        u8 height = numActions * 2 + (numActions > START_MENU_MAX_PADDED_ACTIONS ? 0 : 2);
+        sStartMenuWindowId = AddWindowParameterized(0, 22, 1, 7, height, 15, 0x139);
+    }
     return sStartMenuWindowId;
 }
 

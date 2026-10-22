@@ -1,5 +1,6 @@
 #include "global.h"
 #include "script.h"
+#include "dexnav.h"
 #include "event_data.h"
 #include "mystery_gift.h"
 #include "util.h"
@@ -182,6 +183,9 @@ u32 ScriptReadWord(struct ScriptContext *ctx)
 void LockPlayerFieldControls(void)
 {
     sLockFieldControls = TRUE;
+    // Scripts, menus, battles etc. all lock the controls first, so this ends
+    // a DexNav search before anything else is drawn
+    EndDexNavSearch();
 }
 
 void UnlockPlayerFieldControls(void)

@@ -31,6 +31,11 @@ extern void (*gItemUseCB)(u8, TaskFunc);
 
 extern const u16 gTutorMoves[];
 
+// Held item / mail icons (also used by the DexNav)
+#define TAG_HELD_ITEM 55120
+extern const struct SpriteSheet gSpriteSheet_HeldItem;
+extern const struct SpritePalette gSpritePalette_HeldItem;
+
 void AnimatePartySlot(u8 slot, u8 animNum);
 bool8 IsMultiBattle(void);
 u8 GetCursorSelectionMonId(void);

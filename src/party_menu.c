@@ -145,8 +145,6 @@ enum {
     TAG_STATUS_ICONS,
 };
 
-#define TAG_HELD_ITEM 55120
-
 #define PARTY_PAL_SELECTED     (1 << 0)
 #define PARTY_PAL_FAINTED      (1 << 1)
 #define PARTY_PAL_TO_SWITCH    (1 << 2)
@@ -4060,8 +4058,8 @@ static void ShowOrHideHeldItemSprite(u16 item, struct PartyMenuBox *menuBox)
 
 void LoadHeldItemIcons(void)
 {
-    LoadSpriteSheet(&sSpriteSheet_HeldItem);
-    LoadSpritePalette(&sSpritePalette_HeldItem);
+    LoadSpriteSheet(&gSpriteSheet_HeldItem);
+    LoadSpritePalette(&gSpritePalette_HeldItem);
 }
 
 void DrawHeldItemIconsForTrade(u8 *partyCounts, u8 *partySpriteIds, u8 whichParty)

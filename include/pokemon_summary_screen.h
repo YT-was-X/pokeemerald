@@ -8,6 +8,11 @@ extern u8 gLastViewedMonIndex;
 extern const u8 *const gMoveDescriptionPointers[];
 extern const u8 *const gNatureNamePointers[];
 
+// Type icons (also used by the DexNav). The palette is gMoveTypes_Pal, loaded at OBJ palettes 13-15.
+extern const struct CompressedSpriteSheet gSpriteSheet_MoveTypes;
+extern const struct SpriteTemplate gSpriteTemplate_MoveTypes;
+extern const u8 gMoveTypeToOamPaletteNum[];
+
 void ShowPokemonSummaryScreen(u8 mode, void *mons, u8 monIndex, u8 maxMonIndex, void (*callback)(void));
 void ShowSelectMovePokemonSummaryScreen(struct Pokemon *mons, u8 monIndex, u8 maxMonIndex, void (*callback)(void), u16 newMove);
 void ShowPokemonSummaryScreenHandleDeoxys(u8 mode, struct BoxPokemon *mons, u8 monIndex, u8 maxMonIndex, void (*callback)(void));
