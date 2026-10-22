@@ -10148,6 +10148,13 @@ static void Cmd_displaydexinfo(void)
         if (!gPaletteFade.active)
         {
             FreeAllWindowBuffers();
+            // The battle VBlank callback keeps writing these while the dex page (BGs 2 and 3)
+            // is shown. A level-up from the catch EXP leaves the level-up banner's
+            // gBattle_BG2_X scrolled, which shifted the page sideways.
+            gBattle_BG2_X = 0;
+            gBattle_BG2_Y = 0;
+            gBattle_BG3_X = 0;
+            gBattle_BG3_Y = 0;
             gBattleCommunication[TASK_ID] = DisplayCaughtMonDexPage(SpeciesToNationalPokedexNum(species),
                                                                         gBattleMons[gBattlerTarget].otId,
                                                                         gBattleMons[gBattlerTarget].personality);
