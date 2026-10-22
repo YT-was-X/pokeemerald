@@ -127,6 +127,7 @@
 #define MULTI_SOLO_MINIGAMES               116
 #define MULTI_TRAINING_CAMP_STATS          117
 #define MULTI_FRONTIER_PRIZE_TYPES         118
+#define MULTI_FLOWER_SHOP                  119
 
 // Lilycove SS Tidal Multichoice Selections
 #define SSTIDAL_SELECTION_SLATEPORT        0

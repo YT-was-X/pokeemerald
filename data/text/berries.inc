@@ -178,12 +178,13 @@ Route104_PrettyPetalFlowerShop_Text_YouCanHaveThis:
 Route104_PrettyPetalFlowerShop_Text_WailmerPailExplanation:
 	.string "While BERRY plants are growing,\n"
 	.string "water them with the WAILMER PAIL.\p"
+	.string "One watering keeps a plant happy\n"
+	.string "until its BERRIES are ripe. The\l"
+	.string "sooner you water, the more you get!\p"
 	.string "Oh, another thing.\p"
-	.string "If you don't pick BERRIES for a while,\n"
-	.string "they'll drop off onto the ground.\l"
-	.string "But they'll sprout again.\p"
-	.string "Isn't that awesome?\n"
-	.string "It's like they have the will to live.$"
+	.string "Ripe BERRIES wait on the plant\n"
+	.string "until you come to pick them.\p"
+	.string "Isn't that nice?$"
 
 Route104_PrettyPetalFlowerShop_Text_ImGrowingFlowers:
 	.string "I'm trying to be like my big sisters.\n"

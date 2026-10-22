@@ -19,7 +19,6 @@ static bool32 BerryTreeGrow(struct BerryTree *tree);
 static u16 BerryTypeToItemId(u16 berry);
 static u8 BerryTreeGetNumStagesWatered(struct BerryTree *tree);
 static u8 GetNumStagesWateredByBerryTreeId(u8 id);
-static u8 CalcBerryYieldInternal(u16 max, u16 min, u8 water);
 static u8 CalcBerryYield(struct BerryTree *tree);
 static u8 GetBerryCountByBerryTreeId(u8 id);
 static u16 GetStageDurationByBerryType(u8);
@@ -38,7 +37,7 @@ static const u8 sBerryDescriptionPart2_Aspear[] = _("juice. It is quite sour.");
 static const u8 sBerryDescriptionPart1_Leppa[] = _("Grows slower than CHERI and others.");
 static const u8 sBerryDescriptionPart2_Leppa[] = _("The smaller the BERRY, the tastier.");
 static const u8 sBerryDescriptionPart1_Oran[] = _("A peculiar BERRY with a mix of flavors.");
-static const u8 sBerryDescriptionPart2_Oran[] = _("BERRIES grow in half a day.");
+static const u8 sBerryDescriptionPart2_Oran[] = _("BERRIES grow in just six hours.");
 static const u8 sBerryDescriptionPart1_Persim[] = _("Loves sunlight. The BERRY's color");
 static const u8 sBerryDescriptionPart2_Persim[] = _("grows vivid when exposed to the sun.");
 static const u8 sBerryDescriptionPart1_Lum[] = _("Slow to grow. If raised with loving");
@@ -54,9 +53,9 @@ static const u8 sBerryDescriptionPart2_Mago[] = _("The curvier, the sweeter and 
 static const u8 sBerryDescriptionPart1_Aguav[] = _("The flower is dainty. It is rare in its");
 static const u8 sBerryDescriptionPart2_Aguav[] = _("ability to grow without light.");
 static const u8 sBerryDescriptionPart1_Iapapa[] = _("The BERRY is very big and sour.");
-static const u8 sBerryDescriptionPart2_Iapapa[] = _("It takes at least a day to grow.");
+static const u8 sBerryDescriptionPart2_Iapapa[] = _("It takes at least half a day to grow.");
 static const u8 sBerryDescriptionPart1_Razz[] = _("The red BERRY tastes slightly spicy.");
-static const u8 sBerryDescriptionPart2_Razz[] = _("It grows quickly in just four hours.");
+static const u8 sBerryDescriptionPart2_Razz[] = _("It grows quickly in just two hours.");
 static const u8 sBerryDescriptionPart1_Bluk[] = _("The BERRY is blue on the outside, but");
 static const u8 sBerryDescriptionPart2_Bluk[] = _("it blackens the mouth when eaten.");
 static const u8 sBerryDescriptionPart1_Nanab[] = _("This BERRY was the seventh");
@@ -996,6 +995,7 @@ struct BerryTree *GetBerryTreeInfo(u8 id)
     return &gSaveBlock1Ptr->berryTrees[id];
 }
 
+// One watering covers the current stage and every later one (vanilla: only the current stage)
 bool32 ObjectEventInteractionWaterBerryTree(void)
 {
     struct BerryTree *tree = GetBerryTreeInfo(GetObjectEventBerryTreeId(gSelectedObjectEvent));
@@ -1004,13 +1004,13 @@ bool32 ObjectEventInteractionWaterBerryTree(void)
     {
     case BERRY_STAGE_PLANTED:
         tree->watered1 = TRUE;
-        break;
+        // fallthrough
     case BERRY_STAGE_SPROUTED:
         tree->watered2 = TRUE;
-        break;
+        // fallthrough
     case BERRY_STAGE_TALLER:
         tree->watered3 = TRUE;
-        break;
+        // fallthrough
     case BERRY_STAGE_FLOWERING:
         tree->watered4 = TRUE;
         break;
@@ -1084,30 +1084,24 @@ void BerryTreeTimeUpdate(s32 minutes)
     {
         tree = &gSaveBlock1Ptr->berryTrees[i];
 
+        // Ripe berries stay on the tree until picked: trees stop at BERRY_STAGE_BERRIES
+        // instead of dropping them and regrowing, and a long time away no longer clears
+        // the tree (vanilla: after 71 stages' worth of minutes).
         if (tree->berry && tree->stage && !tree->stopGrowth)
         {
-            if (minutes >= GetStageDurationByBerryType(tree->berry) * 71)
-            {
-                *tree = gBlankBerryTree;
-            }
-            else
-            {
-                s32 time = minutes;
+            s32 time = minutes;
 
-                while (time != 0)
+            while (time != 0 && tree->stage != BERRY_STAGE_BERRIES)
+            {
+                if (tree->minutesUntilNextStage > time)
                 {
-                    if (tree->minutesUntilNextStage > time)
-                    {
-                        tree->minutesUntilNextStage -= time;
-                        break;
-                    }
-                    time -= tree->minutesUntilNextStage;
-                    tree->minutesUntilNextStage = GetStageDurationByBerryType(tree->berry);
-                    if (!BerryTreeGrow(tree))
-                        break;
-                    if (tree->stage == BERRY_STAGE_BERRIES)
-                        tree->minutesUntilNextStage *= 4;
+                    tree->minutesUntilNextStage -= time;
+                    break;
                 }
+                time -= tree->minutesUntilNextStage;
+                tree->minutesUntilNextStage = GetStageDurationByBerryType(tree->berry);
+                if (!BerryTreeGrow(tree))
+                    break;
             }
         }
     }
@@ -1207,7 +1201,7 @@ static u8 GetNumStagesWateredByBerryTreeId(u8 id)
 // Berries can be watered at 4 stages of growth. The distribution is largely
 // even but slightly prefers middle berry yields, since it uniformly draws from
 // a subset of the total yield range.
-static u8 CalcBerryYieldInternal(u16 max, u16 min, u8 water)
+static u8 UNUSED CalcBerryYieldInternal(u16 max, u16 min, u8 water)
 {
     u32 randMin;
     u32 randMax;
@@ -1233,13 +1227,14 @@ static u8 CalcBerryYieldInternal(u16 max, u16 min, u8 water)
     }
 }
 
+// Always the berry's max yield, plus a quarter of it (rounded) for each watered stage,
+// so a fully watered tree gives twice the max (vanilla: min to max by watering).
 static u8 CalcBerryYield(struct BerryTree *tree)
 {
-    const struct Berry *berry = GetBerryInfo(tree->berry);
-    u8 min = berry->minYield;
-    u8 max = berry->maxYield;
+    u8 max = GetBerryInfo(tree->berry)->maxYield;
+    u8 water = BerryTreeGetNumStagesWatered(tree);
 
-    return CalcBerryYieldInternal(max, min, BerryTreeGetNumStagesWatered(tree));
+    return max + (max * water + NUM_WATER_STAGES / 2) / NUM_WATER_STAGES;
 }
 
 static u8 GetBerryCountByBerryTreeId(u8 id)
@@ -1247,9 +1242,10 @@ static u8 GetBerryCountByBerryTreeId(u8 id)
     return gSaveBlock1Ptr->berryTrees[id].berryYield;
 }
 
+// Each growth stage lasts half the berry's listed hours (vanilla: the full hours)
 static u16 GetStageDurationByBerryType(u8 berry)
 {
-    return GetBerryInfo(berry)->stageDuration * 60;
+    return GetBerryInfo(berry)->stageDuration * 30;
 }
 
 void ObjectEventInteractionGetBerryTreeData(void)
@@ -1348,4 +1344,14 @@ void SetBerryTreesSeen(void)
                 AllowBerryTreeGrowth(gObjectEvents[i].trainerRange_berryTreeId);
         }
     }
+}
+
+// Special for the Berry Master: 1 in BERRY_MASTER_PINCH_CHANCE a pinch berry (Liechi to
+// Starf), otherwise Pomeg to Belue. VAR_RESULT = the berry item.
+#define BERRY_MASTER_PINCH_CHANCE 8
+u16 GetBerryMasterBerry(void)
+{
+    if (Random() % BERRY_MASTER_PINCH_CHANCE == 0)
+        return ITEM_LIECHI_BERRY + Random() % (ITEM_STARF_BERRY - ITEM_LIECHI_BERRY + 1);
+    return ITEM_POMEG_BERRY + Random() % (ITEM_BELUE_BERRY - ITEM_POMEG_BERRY + 1);
 }

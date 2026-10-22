@@ -6,25 +6,38 @@ Route123_BerryMastersHouse_OnTransition:
 	setflag FLAG_LANDMARK_BERRY_MASTERS_HOUSE
 	end
 
+@ Gives 3 berries per visit, twice a day (GetBerryMasterBerry, src/berry.c: Pomeg to
+@ Belue, 1 in 8 a pinch berry). Vanilla: 2 berries from Pomeg to Nomel, once a day.
 Route123_BerryMastersHouse_EventScript_BerryMaster::
 	lock
 	faceplayer
 	dotimebasedevents
-	goto_if_set FLAG_DAILY_BERRY_MASTER_RECEIVED_BERRY, Route123_BerryMastersHouse_EventScript_ReceivedBerryToday
+	goto_if_set FLAG_DAILY_BERRY_MASTER_SECOND_GIFT, Route123_BerryMastersHouse_EventScript_ReceivedBerryToday
 	msgbox Route123_BerryMastersHouse_Text_YoureDeservingOfBerry, MSGBOX_DEFAULT
-	random NUM_BERRY_MASTER_BERRIES
-	addvar VAR_RESULT, NUM_BERRY_MASTER_BERRIES_SKIPPED
-	addvar VAR_RESULT, FIRST_BERRY_INDEX
+	specialvar VAR_RESULT, GetBerryMasterBerry
 	giveitem VAR_RESULT
 	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
+	call_if_set FLAG_DAILY_BERRY_MASTER_RECEIVED_BERRY, Route123_BerryMastersHouse_EventScript_SetSecondGift
 	setflag FLAG_DAILY_BERRY_MASTER_RECEIVED_BERRY
 	msgbox Route123_BerryMastersHouse_Text_WhyBeStingyTakeAnother, MSGBOX_DEFAULT
-	random NUM_BERRY_MASTER_BERRIES
-	addvar VAR_RESULT, NUM_BERRY_MASTER_BERRIES_SKIPPED
-	addvar VAR_RESULT, FIRST_BERRY_INDEX
+	specialvar VAR_RESULT, GetBerryMasterBerry
 	giveitem VAR_RESULT
 	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
+	msgbox Route123_BerryMastersHouse_Text_AndOneMore, MSGBOX_DEFAULT
+	specialvar VAR_RESULT, GetBerryMasterBerry
+	giveitem VAR_RESULT
+	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
+	goto_if_unset FLAG_DAILY_BERRY_MASTER_SECOND_GIFT, Route123_BerryMastersHouse_EventScript_ComeBackLater
 	msgbox Route123_BerryMastersHouse_Text_VisitPrettyPetalFlowerShop, MSGBOX_DEFAULT
+	release
+	end
+
+Route123_BerryMastersHouse_EventScript_SetSecondGift::
+	setflag FLAG_DAILY_BERRY_MASTER_SECOND_GIFT
+	return
+
+Route123_BerryMastersHouse_EventScript_ComeBackLater::
+	msgbox Route123_BerryMastersHouse_Text_ComeBackLaterToday, MSGBOX_DEFAULT
 	release
 	end
 
@@ -128,3 +141,10 @@ Route123_BerryMastersHouse_EventScript_GaveBerry::
 	release
 	end
 
+Route123_BerryMastersHouse_Text_AndOneMore:
+	.string "And one more for good measure!$"
+
+Route123_BerryMastersHouse_Text_ComeBackLaterToday:
+	.string "I can spare a few more today.\n"
+	.string "Come and see me again!\p"
+	.string "Let flowers fill the world!$"

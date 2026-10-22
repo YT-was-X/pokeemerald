@@ -572,3 +572,4 @@ gSpecials::
 	def_special ShowFrontierPrizeMenu
 	def_special BufferFrontierPrizeInfo
 	def_special TryBuyFrontierPrize
+	def_special GetBerryMasterBerry

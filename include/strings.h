@@ -1034,6 +1034,8 @@ extern const u8 gText_PrizePokemon[];
 extern const u8 gText_PrizeTraining[];
 extern const u8 gText_PrizeHoldItems[];
 extern const u8 gText_PrizeTypeItems[];
+extern const u8 gText_ShopBerries[];
+extern const u8 gText_ShopPlants[];
 
 extern const u8 gText_OhABite[];
 extern const u8 gText_PokemonOnHook[];
