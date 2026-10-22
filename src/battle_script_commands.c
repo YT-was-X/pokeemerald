@@ -851,7 +851,7 @@ static const u8 sBallCatchBonuses[] =
     [ITEM_ULTRA_BALL - ITEM_ULTRA_BALL]  = 25, // vanilla 20 (2x)
     [ITEM_GREAT_BALL - ITEM_ULTRA_BALL]  = 15,
     [ITEM_POKE_BALL - ITEM_ULTRA_BALL]   = 10,
-    [ITEM_SAFARI_BALL - ITEM_ULTRA_BALL] = 15
+    [ITEM_SAFARI_BALL - ITEM_ULTRA_BALL] = 20, // vanilla 15 (1.5x)
 };
 
 // In Battle Palace, moves are chosen based on the pokemons nature rather than by the player
@@ -9960,10 +9960,15 @@ static void Cmd_handleballthrow(void)
         u32 odds;
         u8 catchRate;
 
+        catchRate = gSpeciesInfo[gBattleMons[gBattlerTarget].species].catchRate;
         if (gLastUsedItem == ITEM_SAFARI_BALL)
-            catchRate = gBattleStruct->safariCatchFactor * 1275 / 100;
-        else
-            catchRate = gSpeciesInfo[gBattleMons[gBattlerTarget].species].catchRate;
+        {
+            // The species' real catch rate, moved by however far Go Near has raised the
+            // catch factor (vanilla: factor * 12.75, which rounds the catch rate down)
+            u32 startFactor = catchRate * 100 / 1275;
+            u32 rate = catchRate + (gBattleStruct->safariCatchFactor - startFactor) * 1275 / 100;
+            catchRate = min(rate, 255);
+        }
 
         if (gLastUsedItem == ITEM_MASTER_BALL)
         {

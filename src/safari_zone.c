@@ -79,13 +79,9 @@ bool8 SafariZoneTakeStep(void)
         return FALSE;
     }
 
+    // No step limit: the visit ends only when the Safari Balls run out or the player
+    // leaves (vanilla: 500 steps, then SafariZone_EventScript_TimesUp)
     DecrementFeederStepCounters();
-    sSafariZoneStepCounter--;
-    if (sSafariZoneStepCounter == 0)
-    {
-        ScriptContext_SetupScript(SafariZone_EventScript_TimesUp);
-        return TRUE;
-    }
     return FALSE;
 }
 
